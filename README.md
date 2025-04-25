@@ -12,7 +12,7 @@ by Lutz Kämmerer, Daniel Potts, and Fabian Taubert.
 - *NABOPB.py*: Main implementation of the NABOPB algorithm.
 - *NABOPB_subroutines.py*: Supporting subroutines required by the main algorithm.
 - *demo.py*: A collection of demo examples demonstrating the use of the NABOPB algorithm.  
-  ⚠️ **Note**: For quick tests, use small parameters (e.g., sparsity `s` and extension `Gamma.N`), or comment out unnecessary demo calls.
+  ⚠️ **Note**: For quick tests, use small parameters (e.g., sparsity `s` and extension `Gamma.N`), or comment out unnecessary NABOPB calls.
 - *r1lfft/*, *mr1lfft/*, *cmr1lfft/*: Python implementations for generating rank-1 lattices and performing fast transforms on them. These implementations are based on original MATLAB code by Lutz Kämmerer.
 
 ---
