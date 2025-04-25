@@ -1,9 +1,25 @@
 # NABOPB
 
-The Python code for the NABOPB algorithm presented in the paper "Nonlinear approximation in bounded orthonormal product bases" by Lutz Kämmerer, Daniel Potts and Fabian Taubert.
+This repository provides the Python implementation of the **NABOPB algorithm** from the paper:  
+**"Nonlinear approximation in bounded orthonormal product bases"**  
+by Lutz Kämmerer, Daniel Potts, and Fabian Taubert.  
+📄 [Read the paper here](https://doi.org/10.1007/s43670-023-00057-7)
 
-The main algorithm is given in NABOPB.py together with the necessary subroutines in NABOPB_subroutines.py
+---
 
-demo.py contains several demo examples for the application of the algorithm. It is highly recommended to use small parameters (sparsity s and extension Gamma.N) or to comment the unwanted executions of the algorithm beforehand.
+## 📁 Contents
 
-r1lfft, mr1lfft and cmr1lfft contain the Python codes for the generation of the rank-1 lattices as well as the fast transforms on these lattices. The codes mainly originate from MATLAB codes by Lutz Kämmerer.
+- *NABOPB.py*: Main implementation of the NABOPB algorithm.
+- *NABOPB_subroutines.py*: Supporting subroutines required by the main algorithm.
+- *demo.py*: A collection of demo examples demonstrating the use of the NABOPB algorithm.  
+  ⚠️ **Note**: For quick tests, use small parameters (e.g., sparsity `s` and extension `Gamma.N`), or comment out unnecessary demo calls.
+- *r1lfft/*, *mr1lfft/*, *cmr1lfft/*: Python implementations for generating rank-1 lattices and performing fast transforms on them. These implementations are based on original MATLAB code by Lutz Kämmerer.
+
+---
+
+## ▶️ Getting Started
+
+To run the demo examples:
+
+```bash
+python demo.py
