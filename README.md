@@ -19,7 +19,7 @@ by Lutz Kämmerer, Daniel Potts, and Fabian Taubert.
 
 ## ▶️ Getting Started
 
-To run the demo examples:
+Run a single cell of *demo.py* using an IDE of your choice. To run all the demo examples, use
 
 ```bash
 python demo.py
