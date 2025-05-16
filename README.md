@@ -13,7 +13,9 @@ by Lutz Kämmerer, Daniel Potts, and Fabian Taubert.
 - *NABOPB_subroutines.py*: Supporting subroutines required by the main algorithm.
 - *demo.py*: A collection of demo examples demonstrating the use of the NABOPB algorithm.  
   ⚠️ **Note**: For quick tests, use small parameters (e.g., sparsity `s` and extension `Gamma.N`), or comment out unnecessary NABOPB calls.
+- *bspline_test_10d.py*, *bsplinet_test_9d.py*, *cardinal_bspline.py*: Python implementations of test functions made from splines and the cardinal B-spline. Used for tests in *demo.py* and *pde_applications/*.
 - *r1lfft/*, *mr1lfft/*, *cmr1lfft/*: Python implementations for generating rank-1 lattices and performing fast transforms on them. These implementations are based on original MATLAB code by Lutz Kämmerer.
+- *pde_applications/*: Implementations for the application of the NABOPB algorithm to differential equation examples. See below for details.
 
 ---
 
