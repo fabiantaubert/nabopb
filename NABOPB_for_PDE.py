@@ -107,8 +107,8 @@ def NABOPB_for_PDE(
     DOI: https://doi.org/10.1007/s43670-023-00057-7
 
     S. Neumayer, D. Potts, and F. Taubert, "Learning solution operators of PDEs with sparse approximation",
-    arXiv: (2026).
-    DOI:
+    arXiv:2606.06046 (2026).
+    DOI: https://arxiv.org/abs/2606.06046
     """
 
     # Default parameters
