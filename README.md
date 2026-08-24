@@ -14,6 +14,7 @@ by Lutz Kämmerer, Daniel Potts, and Fabian Taubert.
 - `NABOPB_subroutines.py`: Supporting subroutines used by the main algorithm(s).
 - `demo.py`: A collection of demo examples illustrating the use of the `NABOPB.py` algorithm.  
   ⚠️ **Note**: For quick tests, use small parameters (e.g., sparsity `s` and extension `Gamma.N`), or comment out unnecessary NABOPB calls.
+- `requirements.txt`: List of Python packages required by the main NABOPB implementation.
 - `bspline_test_10d.py`, `bsplinet_test_9d.py`, `cardinal_bspline.py`: Implementations of test functions based on splines and the cardinal B-spline. Used for tests in `demo.py` and `pde_applications/`.
 - `r1lfft/`, `mr1lfft/`, `cmr1lfft/`: Python implementations for generating rank-1 lattices and performing fast transforms on them. Based on original MATLAB code by Lutz Kämmerer.
 - `sparse_recovery/`: Python implementations of OMP, CoSaMP and SR-LASSO. Based on the [SparseRecovery Repository](https://github.com/Zeppo1994/SparseRecovery) by Sebastian Neumayer.
@@ -23,7 +24,13 @@ by Lutz Kämmerer, Daniel Potts, and Fabian Taubert.
 
 ## ▶️ Getting Started
 
-To run all demo examples, use:
+First, install the required Python packages from the repository root:
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+Then, to run all demo examples, use:
 
 ```bash
 python demo.py
@@ -58,6 +65,8 @@ Scripts are named according to the differential equation they address. For examp
 ---
 
 ## ▶️ Getting Started
+
+⚠️ Dependencies: Depending on the example, additional packages such as FEniCS, Matplotlib, h5py, mpmath, or NeuralOperator may be required. These packages are not included in the main `requirements.txt`.
 
 To run a demo script:
 
