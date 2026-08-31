@@ -129,7 +129,7 @@ def solve_heat_v1(var):
     with Pool(processes=96) as pool:
         result = pool.map(solve_single, var)
 
-    return np.array(result, dtype=np.complex_)
+    return np.array(result, dtype=np.complex128)
 
 
 def solve_heat_v2(var1, var2, blocksize=1):
