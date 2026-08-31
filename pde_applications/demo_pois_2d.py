@@ -78,7 +78,7 @@ def solve_pois2d(var):
     with Pool() as pool:
         result = pool.map(solve_single, var)
 
-    return np.array(result, dtype=np.complex_)
+    return np.array(result, dtype=np.complex128)
 
 
 # Set parameters
