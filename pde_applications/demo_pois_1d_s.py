@@ -67,7 +67,7 @@ def solve_pois1d(var, tol=1e-6):
     # Parallel solution of the differential equation
     with Pool() as pool:
         val = pool.map(solve_single, [(i, var, tol) for i in range(var.shape[0])])
-    return np.array(val, dtype=np.complex_)
+    return np.array(val, dtype=np.complex128)
 
 
 # Set parameters
