@@ -4,7 +4,7 @@ import numpy as np
 from NABOPB import NABOPB
 
 # Set parameters and flags
-d = 14
+d = 4
 s = 100
 
 basis_flag1 = "Fourier_rand"
