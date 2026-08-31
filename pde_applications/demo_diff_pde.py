@@ -162,7 +162,7 @@ def solve_diff(var):
     with Pool() as pool:
         result = pool.map(solve_single, var)
 
-    return np.array(result, dtype=np.complex_)
+    return np.array(result, dtype=np.complex128)
 
 
 def solve_multiple(args):
