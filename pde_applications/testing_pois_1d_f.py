@@ -35,7 +35,7 @@ def complex_arccos(z):
 
 def eval_cheby(x, val, index):
     # Evaluate the Chebyshev polynomial
-    res = np.zeros((x.shape[0]), dtype=np.complex_)
+    res = np.zeros((x.shape[0]), dtype=np.complex128)
     scal = 2.0 ** (np.sum(index != 0, axis=1) / 2)
     for j in range(x.shape[0]):
         res[j] = np.sum(
