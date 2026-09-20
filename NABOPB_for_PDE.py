@@ -487,7 +487,7 @@ def detect_1D(
         if isinstance(gamma["N"], int):
             ext = gamma["N"]
         else:
-            ext = gamma["N"][j - 1]
+            ext = gamma["N"][j[0] - 1]
         if gamma["sgn"] == "default":
             K = np.arange(-ext, ext + 1).reshape(-1, 1)
         elif gamma["sgn"] == "non-negative":
@@ -498,7 +498,7 @@ def detect_1D(
         if isinstance(gamma["w"], int):
             weight = gamma["w"]
         else:
-            weight = gamma["w"][j - 1]
+            weight = gamma["w"][j[0] - 1]
         max_val = 2 ** gamma["N"] * weight
         if gamma["sgn"] == "default":
             K = np.arange(-max_val, max_val + 1).reshape(-1, 1)
@@ -523,7 +523,7 @@ def detect_1D(
         elif j == d:
             x = np.hstack((x_tilde, Xi))
         else:
-            x = np.hstack((x_tilde[:, : int(j - 1)], Xi, x_tilde[:, int(j - 1) :]))
+            x = np.hstack((x_tilde[:, : int(j[0] - 1)], Xi, x_tilde[:, int(j[0] - 1) :]))
         # Sampling
         if j > pde_dims:
             L = 1
