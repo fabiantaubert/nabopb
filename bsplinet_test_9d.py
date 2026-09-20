@@ -125,8 +125,12 @@ def bspline2t_nd(nodes):
 
 
 def bspline2t_normcheb(d=1):
-    norm_cheb = 0.7257821329550897 ** d
-    norm_cheb_sq = 0.228069332267236 ** d
+    # int_sq: integral of g(x)^2 / sqrt(1 - x^2) over [-1, 1] for the 1-D spline g.
+    # The squared norm w.r.t. the Chebyshev measure dx / (pi * sqrt(1 - x^2)),
+    # which is the one Parseval's identity refers to, is int_sq / pi.
+    int_sq = (115 / 512) * np.pi - (423 / 4096) * np.sqrt(3)
+    norm_cheb = np.sqrt(int_sq) ** d
+    norm_cheb_sq = (int_sq / np.pi) ** d
     return norm_cheb, norm_cheb_sq
 
 
@@ -208,8 +212,8 @@ def bspline4t_nd(nodes):
 
 
 def bspline4t_normcheb(d=1):
-    norm_cheb = (
-        np.sqrt((3904915 / 113246208) * np.pi - (1356109 / 234881024) * np.sqrt(3)) ** d
-    )
-    norm_cheb_sq = 0.0440535567777421 ** d
+    # int_sq and the 1 / pi normalisation: see bspline2t_normcheb.
+    int_sq = (3904915 / 113246208) * np.pi - (1356109 / 234881024) * np.sqrt(3)
+    norm_cheb = np.sqrt(int_sq) ** d
+    norm_cheb_sq = (int_sq / np.pi) ** d
     return norm_cheb, norm_cheb_sq
