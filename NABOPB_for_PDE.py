@@ -359,7 +359,7 @@ def increment(
     if gamma["type"] == "full":
         K = product
     elif gamma["type"] == "sym_hc":
-        if isinstance(gamma["w"], int):
+        if np.isscalar(gamma["w"]):
             temp = np.abs(product) / gamma["w"]
         else:
             weights = gamma["w"][dims]
@@ -484,7 +484,7 @@ def detect_1D(
     # Construction of the candidate set K
     K = 0
     if gamma["type"] == "full":
-        if isinstance(gamma["N"], int):
+        if np.isscalar(gamma["w"]):
             ext = gamma["N"]
         else:
             ext = gamma["N"][j[0] - 1]
@@ -495,7 +495,7 @@ def detect_1D(
         else:
             raise ValueError(f'{gamma["sgn"]} as Gamma Signum is not defined.')
     elif gamma["type"] == "sym_hc":
-        if isinstance(gamma["w"], int):
+        if np.isscalar(gamma["w"]):
             weight = gamma["w"]
         else:
             weight = gamma["w"][j[0] - 1]
