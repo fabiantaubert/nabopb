@@ -345,8 +345,8 @@ def evaluate_cubature_1d(W, Xi, f, K, basis, j, d):
     elif basis in ["Fourier_r1l", "Fourier_ssr1l", "Fourier_mr1l"]:
         # FFT
         # f_hat_temp = np.fft.fftshift(np.fft.fft(f / W, W))
-        f_hat_temp = np.roll(np.fft.fft(f / W, W), max(K))
-        idx = np.arange(min(K), max(K) + 1)
+        f_hat_temp = np.roll(np.fft.fft(f / W, W), int(np.max(K)))
+        idx = np.arange(np.min(K), np.max(K) + 1)
         f_hat = f_hat_temp[np.isin(idx, K)]
     elif basis == "Cheby_rand":
         # LSQR, check if phi.T is correct
@@ -362,7 +362,7 @@ def evaluate_cubature_1d(W, Xi, f, K, basis, j, d):
         f_hat_temp = (scal * np.sqrt(2) / np.sqrt(W)) * dct(
             scal * f, type=1, norm="ortho"
         )
-        idx = np.arange(0, max(K) + 1)
+        idx = np.arange(0, np.max(K) + 1)
         f_hat = f_hat_temp[np.isin(idx, K)]
     elif basis in ["Fourier_SRLasso", "Fourier_SRLasso+"]:
         # Prepare indices
