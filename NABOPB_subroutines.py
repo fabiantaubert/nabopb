@@ -345,7 +345,7 @@ def evaluate_cubature_1d(W, Xi, f, K, basis, j, d):
     elif basis in ["Fourier_r1l", "Fourier_ssr1l", "Fourier_mr1l"]:
         # FFT
         # f_hat_temp = np.fft.fftshift(np.fft.fft(f / W, W))
-        f_hat_temp = np.roll(np.fft.fft(f / W, W), max(K))
+        f_hat_temp = np.roll(np.fft.fft(f / W, W), int(np.max(K)))
         idx = np.arange(np.min(K), np.max(K) + 1)
         f_hat = f_hat_temp[np.isin(idx, K)]
     elif basis == "Cheby_rand":
