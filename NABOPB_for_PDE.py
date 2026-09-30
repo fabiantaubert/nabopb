@@ -362,7 +362,7 @@ def increment(
         if np.isscalar(gamma["w"]):
             temp = np.abs(product) / gamma["w"]
         else:
-            weights = gamma["w"][dims]
+            weights = gamma["w"][dims - 1]
             temp = np.outer(np.ones(product.shape[0]), weights) * np.abs(product)
         temp[temp <= 1] = 1
         product_idx = 2 ** gamma["N"] >= np.prod(temp, axis=1)
