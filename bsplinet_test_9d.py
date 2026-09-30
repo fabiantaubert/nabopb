@@ -129,7 +129,7 @@ def bspline2t_normcheb(d=1):
     # The squared norm w.r.t. the Chebyshev measure dx / (pi * sqrt(1 - x^2)),
     # which is the one Parseval's identity refers to, is int_sq / pi.
     int_sq = (115 / 512) * np.pi - (423 / 4096) * np.sqrt(3)
-    norm_cheb = np.sqrt(int_sq) ** d
+    norm_cheb = np.sqrt(int_sq / np.pi) ** d
     norm_cheb_sq = (int_sq / np.pi) ** d
     return norm_cheb, norm_cheb_sq
 
@@ -214,6 +214,6 @@ def bspline4t_nd(nodes):
 def bspline4t_normcheb(d=1):
     # int_sq and the 1 / pi normalisation: see bspline2t_normcheb.
     int_sq = (3904915 / 113246208) * np.pi - (1356109 / 234881024) * np.sqrt(3)
-    norm_cheb = np.sqrt(int_sq) ** d
+    norm_cheb = np.sqrt(int_sq / np.pi) ** d
     norm_cheb_sq = (int_sq / np.pi) ** d
     return norm_cheb, norm_cheb_sq
