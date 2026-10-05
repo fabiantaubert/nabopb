@@ -182,9 +182,9 @@ def bspline4t_1d(x):
 
 
 def bspline4t_chat_1d(k):
-    k = np.array(k).reshape(-1, 1)
+    k = np.array(k, dtype=float).reshape(-1, 1)
     chat = (
-        (900 * np.sqrt(3) * k * (-9 + k ** 2) * np.cos(k * np.pi) / 3)
+        (900 * np.sqrt(3) * k * (-9 + k ** 2) * np.cos(k * np.pi / 3))
         + 90 * (152 - 75 * k ** 2 + 3 * k ** 4) * np.sin(k * np.pi / 3)
     ) / (
         768 * k * (-16 + k ** 2) * (-9 + k ** 2) * (-4 + k ** 2) * (-1 + k ** 2) * np.pi
