@@ -484,7 +484,7 @@ def detect_1D(
     # Construction of the candidate set K
     K = 0
     if gamma["type"] == "full":
-        if np.isscalar(gamma["w"]):
+        if np.isscalar(gamma["N"]):
             ext = gamma["N"]
         else:
             ext = gamma["N"][j[0] - 1]
