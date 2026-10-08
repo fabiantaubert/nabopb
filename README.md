@@ -49,7 +49,7 @@ by Daniel Potts and Fabian Taubert.
 
 **"Learning solution operators of PDEs with sparse approximation methods"**  
 by Sebastian Neumayer, Daniel Potts and Fabian Taubert.  
-📄 [Read the preprint here](https://arxiv.org/pdf/)
+📄 [Read the preprint here](https://arxiv.org/pdf/2606.06046)
 
 ---
 
