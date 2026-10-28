@@ -355,6 +355,7 @@ def evaluate_cubature_1d(W, Xi, f, K, basis, j, d):
         If the specified `basis` is not recognized or unsupported.
     """
 
+    f = np.asarray(f).reshape(-1)
     f_hat = np.zeros((K.shape[0], 1))
 
     if basis == "Fourier_rand":
@@ -517,6 +518,7 @@ def evaluate_cubature(W, Xi, f, K, basis, dims, d):
         If the specified `basis` is not recognized or unsupported.
     """
 
+    f = np.asarray(f).reshape(-1)
     f_hat = np.zeros(K.shape[0])
     if basis == "Fourier_rand":
         # LSQR
