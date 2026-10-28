@@ -1,3 +1,4 @@
+from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
@@ -81,7 +82,7 @@ def parallel_error(N, results):
 
 
 # Load approximation results
-file_path = "results_pois_1d_f/s1000n64rlasso.pickle"  # cos exp tauschen
+file_path = Path(__file__).resolve().parent / "results_pois_1d_f" / "s1000n64rlasso.pickle"  # cos exp tauschen
 with open(file_path, "rb") as file:
     results = pickle.load(file)
 
