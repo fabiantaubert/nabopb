@@ -3,6 +3,21 @@
 import numpy as np
 from NABOPB import NABOPB
 
+
+def coefficients_in_reference_order(result, freq):
+    """Match detected coefficients to reference frequencies, independent of row order."""
+    index = result["index"]
+    if index.shape != freq.shape:
+        return None
+    result_order = np.lexsort(index.T[::-1])
+    reference_order = np.lexsort(freq.T[::-1])
+    if not np.array_equal(index[result_order], freq[reference_order]):
+        return None
+    aligned = np.empty_like(result["val"])
+    aligned[reference_order] = result["val"][result_order]
+    return aligned
+
+
 # Set parameters and flags
 d = 4
 s = 100
@@ -37,9 +52,10 @@ F_mr1l_result = NABOPB(lambda x: f(x), d, basis_flag4, gamma, diminc, s)
 # Show results
 if "F_rand_result" in locals():
     print("====Variant 1====")
-    if np.array_equal(F_rand_result["index"], freq):
-        err1_l2 = np.linalg.norm(np.transpose(coef) - F_rand_result["val"], 2)
-        err1_inf = np.linalg.norm(np.transpose(coef) - F_rand_result["val"], np.inf)
+    matched_coef = coefficients_in_reference_order(F_rand_result, freq)
+    if matched_coef is not None:
+        err1_l2 = np.linalg.norm(coef - matched_coef, 2)
+        err1_inf = np.linalg.norm(coef - matched_coef, np.inf)
         print(f'Detection successful, samples: {np.sum(F_rand_result["sample_sizes"])}')
         print(f"l_2-error: {err1_l2:e}")
         print(f"max-error: {err1_inf:e}")
@@ -49,9 +65,10 @@ if "F_rand_result" in locals():
 
 if "F_r1l_result" in locals():
     print("====Variant 2====")
-    if np.array_equal(F_r1l_result["index"], freq):
-        err2_l2 = np.linalg.norm(np.transpose(coef) - F_r1l_result["val"], 2)
-        err2_inf = np.linalg.norm(np.transpose(coef) - F_r1l_result["val"], np.inf)
+    matched_coef = coefficients_in_reference_order(F_r1l_result, freq)
+    if matched_coef is not None:
+        err2_l2 = np.linalg.norm(coef - matched_coef, 2)
+        err2_inf = np.linalg.norm(coef - matched_coef, np.inf)
         print(f'Detection successful, samples: {np.sum(F_r1l_result["sample_sizes"])}')
         print(f"l_2-error: {err2_l2:e}")
         print(f"max-error: {err2_inf:e}")
@@ -61,9 +78,10 @@ if "F_r1l_result" in locals():
 
 if "F_ssr1l_result" in locals():
     print("====Variant 3====")
-    if np.array_equal(F_ssr1l_result["index"], freq):
-        err3_l2 = np.linalg.norm(np.transpose(coef) - F_ssr1l_result["val"], 2)
-        err3_inf = np.linalg.norm(np.transpose(coef) - F_ssr1l_result["val"], np.inf)
+    matched_coef = coefficients_in_reference_order(F_ssr1l_result, freq)
+    if matched_coef is not None:
+        err3_l2 = np.linalg.norm(coef - matched_coef, 2)
+        err3_inf = np.linalg.norm(coef - matched_coef, np.inf)
         print(
             f'Detection successful, samples: {np.sum(F_ssr1l_result["sample_sizes"])}'
         )
@@ -75,9 +93,10 @@ if "F_ssr1l_result" in locals():
 
 if "F_mr1l_result" in locals():
     print("====Variant 4====")
-    if np.array_equal(F_mr1l_result["index"], freq):
-        err4_l2 = np.linalg.norm(np.transpose(coef) - F_mr1l_result["val"], 2)
-        err4_inf = np.linalg.norm(np.transpose(coef) - F_mr1l_result["val"], np.inf)
+    matched_coef = coefficients_in_reference_order(F_mr1l_result, freq)
+    if matched_coef is not None:
+        err4_l2 = np.linalg.norm(coef - matched_coef, 2)
+        err4_inf = np.linalg.norm(coef - matched_coef, np.inf)
         print(f'Detection successful, samples: {np.sum(F_mr1l_result["sample_sizes"])}')
         print(f"l_2-error: {err4_l2:e}")
         print(f"max-error: {err4_inf:e}")
@@ -203,9 +222,10 @@ C_ssmr1l_result = NABOPB(lambda x: f_cheby_test(x, freq, coef), d, basis_flag3, 
 # Show results
 if "C_rand_result" in locals():
     print("====Variant 1====")
-    if np.array_equal(C_rand_result["index"], freq):
-        err1_l2 = np.linalg.norm(coef - C_rand_result["val"])
-        err1_inf = np.max(np.abs(coef - C_rand_result["val"]))
+    matched_coef = coefficients_in_reference_order(C_rand_result, freq)
+    if matched_coef is not None:
+        err1_l2 = np.linalg.norm(coef - matched_coef)
+        err1_inf = np.max(np.abs(coef - matched_coef))
         print(f'Detection successful, samples: {np.sum(C_rand_result["sample_sizes"])}')
         print(f"l_2-error: {err1_l2:e}")
         print(f"max-error: {err1_inf:e}")
@@ -215,9 +235,10 @@ if "C_rand_result" in locals():
 
 if "C_mr1l_result" in locals():
     print("====Variant 2====")
-    if np.array_equal(C_mr1l_result["index"], freq):
-        err1_l2 = np.linalg.norm(coef - C_mr1l_result["val"])
-        err1_inf = np.max(np.abs(coef - C_mr1l_result["val"]))
+    matched_coef = coefficients_in_reference_order(C_mr1l_result, freq)
+    if matched_coef is not None:
+        err1_l2 = np.linalg.norm(coef - matched_coef)
+        err1_inf = np.max(np.abs(coef - matched_coef))
         print(f'Detection successful, samples: {np.sum(C_mr1l_result["sample_sizes"])}')
         print(f"l_2-error: {err1_l2:e}")
         print(f"max-error: {err1_inf:e}")
@@ -227,9 +248,10 @@ if "C_mr1l_result" in locals():
 
 if "C_ssmr1l_result" in locals():
     print("====Variant 3====")
-    if np.array_equal(C_ssmr1l_result["index"], freq):
-        err1_l2 = np.linalg.norm(coef - C_ssmr1l_result["val"])
-        err1_inf = np.max(np.abs(coef - C_ssmr1l_result["val"]))
+    matched_coef = coefficients_in_reference_order(C_ssmr1l_result, freq)
+    if matched_coef is not None:
+        err1_l2 = np.linalg.norm(coef - matched_coef)
+        err1_inf = np.max(np.abs(coef - matched_coef))
         print(
             f'Detection successful, samples: {np.sum(C_ssmr1l_result["sample_sizes"])}'
         )
@@ -268,16 +290,15 @@ C_ssmr1l_approx_result = NABOPB(lambda x: bsplinet_test_9d(x), d, basis_flag3, g
 
 if "C_rand_approx_result" in locals():
     print("====Variant 1====")
-    val1 = C_rand_approx_result["val"] * np.sqrt(
-        np.prod(2 ** (C_rand_approx_result["index"] != 0), axis=1)
-    )
+    scale1 = np.sqrt(np.prod(2 ** (C_rand_approx_result["index"] != 0), axis=1))
+    val1 = C_rand_approx_result["val"] * scale1
     true_val1, real_norm1 = bsplinet_test_9d_chat(C_rand_approx_result["index"])
     err1 = {
         "l2": np.linalg.norm(true_val1 - val1, 2),
         "inf": np.linalg.norm(true_val1 - val1, np.inf),
     }
-    print(f"abs. variance: {np.linalg.norm(val1, 2)**2:.5e}")
-    print(f"pos. variance: {np.linalg.norm(true_val1, 2)**2:.5e}")
+    print(f"abs. variance: {np.linalg.norm(C_rand_approx_result["val"], 2)**2:.5e}")
+    print(f"pos. variance: {np.linalg.norm(true_val1 / scale1, 2)**2:.5e}")
     print(f"true variance: {real_norm1:.5e}")
     print(f'l_2-error: {err1["l2"]:.6e}')
     print(f'max-error: {err1["inf"]:.6e}')
@@ -287,16 +308,15 @@ if "C_rand_approx_result" in locals():
 
 if "C_mr1l_approx_result" in locals():
     print("====Variant 2====")
-    val2 = C_mr1l_approx_result["val"] * np.sqrt(
-        np.prod(2 ** (C_mr1l_approx_result["index"] != 0), axis=1)
-    )
+    scale2 = np.sqrt(np.prod(2 ** (C_mr1l_approx_result["index"] != 0), axis=1))
+    val2 = C_mr1l_approx_result["val"] * scale2
     true_val2, real_norm2 = bsplinet_test_9d_chat(C_mr1l_approx_result["index"])
     err2 = {
         "l2": np.linalg.norm(true_val2 - val2, 2),
         "inf": np.linalg.norm(true_val2 - val2, np.inf),
     }
-    print(f"abs. variance: {np.linalg.norm(val2, 2)**2:.5e}")
-    print(f"pos. variance: {np.linalg.norm(true_val2, 2)**2:.5e}")
+    print(f"abs. variance: {np.linalg.norm(C_mr1l_approx_result["val"], 2)**2:.5e}")
+    print(f"pos. variance: {np.linalg.norm(true_val2 / scale2, 2)**2:.5e}")
     print(f"true variance: {real_norm2:.5e}")
     print(f'l_2-error: {err2["l2"]:.6e}')
     print(f'max-error: {err2["inf"]:.6e}')
@@ -306,16 +326,15 @@ if "C_mr1l_approx_result" in locals():
 
 if "C_ssmr1l_approx_result" in locals():
     print("====Variant 3====")
-    val3 = C_ssmr1l_approx_result["val"] * np.sqrt(
-        np.prod(2 ** (C_ssmr1l_approx_result["index"] != 0), axis=1)
-    )
+    scale3 = np.sqrt(np.prod(2 ** (C_ssmr1l_approx_result["index"] != 0), axis=1))
+    val3 = C_ssmr1l_approx_result["val"] * scale3
     true_val3, real_norm3 = bsplinet_test_9d_chat(C_ssmr1l_approx_result["index"])
     err3 = {
         "l2": np.linalg.norm(true_val3 - val3, 2),
         "inf": np.linalg.norm(true_val3 - val3, np.inf),
     }
-    print(f"abs. variance: {np.linalg.norm(val3, 2)**2:.5e}")
-    print(f"pos. variance: {np.linalg.norm(true_val3, 2)**2:.5e}")
+    print(f"abs. variance: {np.linalg.norm(C_ssmr1l_approx_result["val"], 2)**2:.5e}")
+    print(f"pos. variance: {np.linalg.norm(true_val3 / scale3, 2)**2:.5e}")
     print(f"true variance: {real_norm3:.5e}")
     print(f'l_2-error: {err3["l2"]:e}')
     print(f'max-error: {err3["inf"]:e}')
