@@ -310,8 +310,9 @@ def increment(
     cand_sizes += K.shape[0]
     # Construction of the sampling set and the cubature
     tConstruct = time.time()
+    s_crm = sparsity_s_local if len(dims) < d else sparsity_s
     W, Xi = nabopb.construct_cubature(
-        K, basis_flag, dims, d, sparsity_s_local, pde_dims
+        K, basis_flag, dims, d, s_crm, pde_dims
     )
     M = Xi.shape[0]
     run_times[0] += time.time() - tConstruct
