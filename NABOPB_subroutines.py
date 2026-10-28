@@ -634,7 +634,8 @@ def evaluate_cubature(W, Xi, f, K, basis, dims, d):
             matvec=lambda x: Ax_cmr1lss(x, K, W),
             rmatvec=lambda b: Atb_cmr1lss(b, K, W),
         )
-        f_hat = lsqr(A, f)[0]
+        f_weighted = np.sqrt(W["subsampling_data"]["ws"]) * f
+        f_hat = lsqr(A, f_weighted)[0]
     elif basis in ["Cheby_SRLasso", "Cheby_SRLasso+"]:
         samples = torch.from_numpy(Xi).to(prec_type).to(device).requires_grad_(False)
         values = (
@@ -694,11 +695,11 @@ def Atb_cmr1l(b, K, W):
 
 
 def Ax_cmr1lss(x, K, W):
-    return multi_CR1L_subsampled_FFT(x, K, W, "notransp")
+    return multi_CR1L_subsampled_FFT(x, K, W, "notransp", "weighted")
 
 
 def Atb_cmr1lss(b, K, W):
-    return multi_CR1L_subsampled_FFT(b, K, W, "transp")
+    return multi_CR1L_subsampled_FFT(b, K, W, "transp", "weighted")
 
 
 def unique_up_to_sign(K):
