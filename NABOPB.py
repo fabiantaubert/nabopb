@@ -65,7 +65,8 @@ def NABOPB(
         Target sparsity of the output. Default is (2 * N_gamma + 1)^d.
 
     sparsity_s_local : int, optional
-        Local target sparsity for intermediate steps. Defaults to `sparsity_s`.
+        Local target sparsity for intermediate steps.
+        Must be at least `sparsity_s`. Defaults to `sparsity_s`.
 
     delta : float, optional
         Relative threshold for truncation at each step. Default is 1e-12.
@@ -130,6 +131,8 @@ def NABOPB(
         raise ValueError("NABOPB requires d >= 2.")
     check_naturalnumber_or_error(sparsity_s, "parameter s")
     check_naturalnumber_or_error(sparsity_s_local, "parameter s_local")
+    if sparsity_s > sparsity_s_local:
+        raise ValueError("Parameter s must not exceed s_local.")
     check_0leq_param_or_error(delta, "parameter delta")
     check_naturalnumber_or_error(niter_r, "parameter niter_r")
     if "superpos" in gamma:
