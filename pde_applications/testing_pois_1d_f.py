@@ -1,5 +1,5 @@
 from pathlib import Path
-import csv
+import matplotlib.pyplot as plt
 import numpy as np
 import pickle
 from multiprocessing import Pool
@@ -98,16 +98,37 @@ errs = [
     for real_bound, imag_bound in test_domains
 ]
 
-# Five rows (one per domain): minimum, Q1, median, Q3, maximum.
-csv_path = Path(__file__).resolve().parent / "results_pois_1d_f" / "boxerr.csv"
-with open(csv_path, "w", newline="") as file:
-    writer = csv.writer(file)
-    for err in errs:
-        writer.writerow([
-            np.min(err),
-            np.percentile(err, 25),
-            np.median(err),
-            np.percentile(err, 75),
-            np.max(err),
-        ])
-print(f"Saved {csv_path}")
+# Display the five domain-specific error distributions; do not write output files.
+domain_labels = [
+    r"$[-1,1]^9$",
+    r"$[-2,2]^9$",
+    r"$[-4,4]^9$",
+    r"$[-1,1]^9+i[-1,1]^9$",
+    r"$[-2,2]^9+i[-2,2]^9$",
+]
+
+plt.figure(figsize=(9, 4))
+plt.boxplot(
+    errs,
+    vert=False,
+    widths=0.5,
+    patch_artist=True,
+    boxprops=dict(facecolor="lightblue", color="blue"),
+    medianprops=dict(color="darkblue"),
+    whiskerprops=dict(color="blue"),
+    capprops=dict(color="blue"),
+    flierprops=dict(
+        markerfacecolor="blue",
+        marker="o",
+        markersize=3,
+        linestyle="none",
+        markeredgecolor="none",
+    ),
+)
+plt.yticks(range(1, len(domain_labels) + 1), domain_labels)
+plt.xscale("log")
+plt.xlabel(r"Relative $L^2$ error (log scale)", fontsize=12)
+plt.title("1D Poisson equation: Fourier-parametrized right-hand side", fontsize=13)
+plt.grid(True, axis="x", linestyle="--", alpha=0.6)
+plt.tight_layout()
+plt.show()
