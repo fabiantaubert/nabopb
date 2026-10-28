@@ -80,7 +80,6 @@ def random_number(d, dims, basis, number_points=1):
     elif basis in {
         "Cheby_rand",
         "Cheby_mr1l",
-        "Cheby_mr1l_2024",
         "Cheby_mr1l_subsampling",
         "Cheby_SRLasso",
         "Cheby_SRLasso+",
