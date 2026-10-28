@@ -112,7 +112,14 @@ def NABOPB_for_PDE(
 
     # Default parameters
     if gamma is None:
-        gamma = {"type": "full", "N": 32, "sgn": "default"}
+        if basis_flag.startswith("Cheby_"):
+            gamma = {"type": "full", "N": 32, "sgn": "non-negative"}
+        else:
+            gamma = {"type": "full", "N": 32, "sgn": "default"}
+    if basis_flag.startswith("Cheby_") and gamma.get("sgn") != "non-negative":
+        raise ValueError(
+            "Chebyshev bases require gamma['sgn'] = 'non-negative'."
+        )
     if diminc is None:
         diminc = {"type": "default"}
     if sparsity_s is None:
