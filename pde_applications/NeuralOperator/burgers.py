@@ -35,8 +35,8 @@ def solve_burgers_full(
     a_coeffs,
     nu=0.05,
     nx=1000,
-    rtol=1e-8,
-    atol=1e-10,
+    rtol=1e-6,
+    atol=1e-8,
 ):
     x_vals = np.linspace(0, 1, nx)
     dx = x_vals[1] - x_vals[0]
