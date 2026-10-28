@@ -76,7 +76,7 @@ def create_heat_1dtime(
     n_modes: int = 9,
     Gx: int = 100,
     Gt: int = 100,
-    n_cores: int = 1,
+    n_cores: int | None = None,
 ):
     """
     Generate and save a dataset for the 1D heat equation.
@@ -97,7 +97,7 @@ def create_heat_1dtime(
     Gt : int, optional
         Number of temporal grid points (default: 100).
     n_cores : int, optional
-        Number of processes used for parallel PDE solves (default: 1).
+        Number of processes for parallel PDE solves (default: automatic).
     """
 
     x_grid = np.linspace(0, 1, Gx)
@@ -143,7 +143,7 @@ def create_heat_1dtime(
     u0_test = torch.from_numpy(u0_test)
     u_test = torch.from_numpy(u_test)
 
-    out_dir = Path("heat_data") / f"train{n_train}_test{n_test}"
+    out_dir = Path(__file__).resolve().parent / "heat_data" / f"train{n_train}_test{n_test}"
     out_dir.mkdir(parents=True, exist_ok=True)
     torch.save(u0_train, out_dir / "u0_train.pt")
     torch.save(u_train, out_dir / "u_train.pt")
@@ -209,6 +209,6 @@ def load_heat_1dtime(
 
 if __name__ == "__main__":
     start = time.time()
-    create_heat_1dtime(n_train=40000, n_test=500, n_cores=96)
+    create_heat_1dtime(n_train=40000, n_test=500)
     end = time.time()
     print(f"Generation took {end - start:.2f} seconds.")
