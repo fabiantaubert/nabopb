@@ -174,6 +174,8 @@ def NABOPB_for_PDE(
             niter_r,
             pde_disc,
         )
+        if I[(1, 1)].shape[0] == 0:
+            raise ValueError("No indices were detected during 1D detection for dimension 1.")
         sample_sizes[0] += sample_sizes_j
         cand_sizes[0] += cand_sizes_j
         run_times[:3] += run_times_j
@@ -194,6 +196,10 @@ def NABOPB_for_PDE(
                 niter_r,
                 pde_disc,
             )
+            if I[(2, 1)].shape[0] == 0:
+                raise ValueError(
+                    f"No indices were detected during 1D detection for dimension {t}."
+                )
             sample_sizes[0] += sample_sizes_j
             cand_sizes[0] += cand_sizes_j
             run_times[:3] += run_times_j
@@ -219,6 +225,10 @@ def NABOPB_for_PDE(
                 niter_r,
                 pde_disc,
             )
+            if I[(1, 1)].shape[0] == 0:
+                raise ValueError(
+                    f"No indices were detected during the increment to dimension {t}."
+                )
             sample_sizes[t - 1] += sample_sizes_j
             cand_sizes[t - 1] += cand_sizes_j
             run_times[:3] += run_times_j
@@ -292,10 +302,11 @@ def increment(
     if "superpos" in gamma:
         superpos_idx = np.sum(K != 0, axis=1) <= gamma["superpos"]
         K = K[superpos_idx, :]
-        if K.size == 0:
-            raise ValueError(
-                "Superposition assumption resulted in an empty candidate set K!"
-            )
+    if K.shape[0] == 0:
+        raise ValueError(
+            "The candidate set K is empty. "
+            "Check the search space and previously detected indices."
+        )
     cand_sizes += K.shape[0]
     # Construction of the sampling set and the cubature
     tConstruct = time.time()
