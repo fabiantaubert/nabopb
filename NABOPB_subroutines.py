@@ -120,7 +120,7 @@ def construct_cubature_1d(K, basis, j, d, s):
     if basis == "Fourier_rand":
         # Monte Carlo, W is number of nodes
         n = K.shape[0]
-        W = int(np.ceil(n * np.log(n)))
+        W = max(1, int(np.ceil(n * np.log(n))))
         Xi = np.sort(np.random.rand(W))
 
     elif basis in {"Fourier_r1l", "Fourier_ssr1l", "Fourier_mr1l"}:
@@ -142,7 +142,7 @@ def construct_cubature_1d(K, basis, j, d, s):
     elif basis == "Cheby_rand":
         # Monte Carlo, W is number of nodes
         n = np.sum(2 ** (np.sum(K != 0, axis=1)))
-        W = int(np.ceil(n * np.log(n)))
+        W = max(1, int(np.ceil(n * np.log(n))))
         Xi = np.sort(np.sin(np.pi * (np.random.rand(W) - 0.5)))
 
     elif basis in {"Cheby_mr1l", "Cheby_mr1l_subsampling"}:
@@ -207,7 +207,7 @@ def construct_cubature(K, basis, dims, d, s, pde_dims=None):
     if basis == "Fourier_rand":
         # Monte Carlo, W is number of nodes
         n = K.shape[0]
-        W = int(np.ceil(n * np.log(n)))
+        W = max(1, int(np.ceil(n * np.log(n))))
         t = K.shape[1]
         Xi = np.random.rand(W, t)
     elif basis == "Fourier_r1l":
@@ -221,7 +221,7 @@ def construct_cubature(K, basis, dims, d, s, pde_dims=None):
         Xi_full = np.mod(np.arange(M).reshape(-1, 1) * z, M) / M
         # Draw n (log n) random indices
         n = K.shape[0]
-        N = int(np.ceil(n * np.log(n)))
+        N = max(1, int(np.ceil(n * np.log(n))))
         idcs_s = np.random.randint(0, M, N)
         # Reduce nodes
         Xi = Xi_full[np.unique(idcs_s), :]
@@ -251,7 +251,7 @@ def construct_cubature(K, basis, dims, d, s, pde_dims=None):
     elif basis == "Cheby_rand":
         # Monte Carlo, W is number of nodes
         n = np.sum(2 ** (np.sum(K != 0, axis=1)))
-        W = int(np.ceil(n * np.log(n)))
+        W = max(1, int(np.ceil(n * np.log(n))))
         t = K.shape[1]
         Xi = np.sin(np.pi * (np.random.rand(W, t) - 0.5))
     elif basis == "Cheby_mr1l":
