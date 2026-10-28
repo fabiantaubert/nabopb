@@ -1,7 +1,7 @@
 import math
 import torch
 import numpy as np
-from tqdm.notebook import tqdm
+from tqdm.auto import tqdm
 
 
 def pd_rLASSO(
