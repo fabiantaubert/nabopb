@@ -297,7 +297,7 @@ if "C_rand_approx_result" in locals():
         "l2": np.linalg.norm(true_val1 - val1, 2),
         "inf": np.linalg.norm(true_val1 - val1, np.inf),
     }
-    print(f"abs. variance: {np.linalg.norm(C_rand_approx_result["val"], 2)**2:.5e}")
+    print(f"abs. variance: {np.linalg.norm(C_rand_approx_result['val'], 2)**2:.5e}")
     print(f"pos. variance: {np.linalg.norm(true_val1 / scale1, 2)**2:.5e}")
     print(f"true variance: {real_norm1:.5e}")
     print(f'l_2-error: {err1["l2"]:.6e}')
@@ -315,7 +315,7 @@ if "C_mr1l_approx_result" in locals():
         "l2": np.linalg.norm(true_val2 - val2, 2),
         "inf": np.linalg.norm(true_val2 - val2, np.inf),
     }
-    print(f"abs. variance: {np.linalg.norm(C_mr1l_approx_result["val"], 2)**2:.5e}")
+    print(f"abs. variance: {np.linalg.norm(C_mr1l_approx_result['val'], 2)**2:.5e}")
     print(f"pos. variance: {np.linalg.norm(true_val2 / scale2, 2)**2:.5e}")
     print(f"true variance: {real_norm2:.5e}")
     print(f'l_2-error: {err2["l2"]:.6e}')
@@ -333,7 +333,7 @@ if "C_ssmr1l_approx_result" in locals():
         "l2": np.linalg.norm(true_val3 - val3, 2),
         "inf": np.linalg.norm(true_val3 - val3, np.inf),
     }
-    print(f"abs. variance: {np.linalg.norm(C_ssmr1l_approx_result["val"], 2)**2:.5e}")
+    print(f"abs. variance: {np.linalg.norm(C_ssmr1l_approx_result['val'], 2)**2:.5e}")
     print(f"pos. variance: {np.linalg.norm(true_val3 / scale3, 2)**2:.5e}")
     print(f"true variance: {real_norm3:.5e}")
     print(f'l_2-error: {err3["l2"]:e}')
