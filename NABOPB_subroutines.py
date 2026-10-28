@@ -147,7 +147,7 @@ def construct_cubature_1d(K, basis, j, d, s):
 
     elif basis in {"Cheby_mr1l", "Cheby_mr1l_subsampling"}:
         # DCT-I of length W+1
-        W = np.max(K)
+        W = max(1, int(np.max(K)))
         Xi = np.cos(np.pi * np.linspace(0, 1, W + 1))
 
     elif basis in {
