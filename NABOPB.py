@@ -52,6 +52,7 @@ def NABOPB(
         - 'w': Weights defining the shape of the search space (scalar or array of size d).
         - 'superpos': Superposition dimension d_s (||k||_0 <= d_s).
         - 'sgn': Specifies index sign constraints ('default' or 'non-negative').
+          Chebyshev bases require 'non-negative'.
         - 'type': Specifies the grid type:
           - 'full': Full grid up to extension N in d dimensions.
           - 'sym_hc': Symmetric hyperbolic cross with extension N (scalar) and weights w.
@@ -103,7 +104,14 @@ def NABOPB(
 
     # Default parameters
     if gamma is None:
-        gamma = {"type": "full", "N": 32, "sgn": "default"}
+        if basis_flag.startswith("Cheby_"):
+            gamma = {"type": "full", "N": 32, "sgn": "non-negative"}
+        else:
+            gamma = {"type": "full", "N": 32, "sgn": "default"}
+    if basis_flag.startswith("Cheby_") and gamma.get("sgn") != "non-negative":
+        raise ValueError(
+            "Chebyshev bases require gamma['sgn'] = 'non-negative'."
+        )
     if diminc is None:
         diminc = {"type": "default"}
     if sparsity_s is None:
