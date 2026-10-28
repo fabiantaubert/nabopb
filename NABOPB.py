@@ -28,7 +28,7 @@ def NABOPB(
         A function handle that accepts sampling nodes as an array of size [num_nodes, d].
 
     d : int
-        Dimensionality of the function's domain.
+        Dimensionality of the function's domain (d >= 2).
 
     basis_flag : str
         Specifies the type of basis and reconstruction method. Options include:
@@ -113,6 +113,8 @@ def NABOPB(
 
     # Parameter checks
     check_naturalnumber_or_error(d, "dimensionality d")
+    if d < 2:
+        raise ValueError("NABOPB requires d >= 2.")
     check_naturalnumber_or_error(sparsity_s, "parameter s")
     check_naturalnumber_or_error(sparsity_s_local, "parameter s_local")
     check_0leq_param_or_error(delta, "parameter delta")
