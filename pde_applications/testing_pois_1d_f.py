@@ -1,7 +1,6 @@
 from pathlib import Path
 import csv
 import numpy as np
-import matplotlib.pyplot as plt
 import pickle
 from multiprocessing import Pool
 
