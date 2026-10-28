@@ -1,3 +1,4 @@
+from pathlib import Path
 import numpy as np
 from scipy.integrate import solve_ivp
 from scipy.interpolate import interp1d
@@ -157,7 +158,7 @@ def build_filename(s, N, optional=""):
 
 
 # Set folder, create file path. Note: Use 'optional' to save multiple versions with same s and N.
-folder = "results_burgers_1d"
+folder = Path(__file__).resolve().parent / "results_burgers_1d"
 file_path = os.path.join(folder, build_filename(s, gamma["N"], optional="OMP+"))
 
 if not os.path.exists(folder):
