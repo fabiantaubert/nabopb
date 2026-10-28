@@ -137,7 +137,7 @@ def construct_cubature_1d(K, basis, j, d, s):
         "Fourier_COSAMP+",
     }:
         W = s
-        Xi = np.random.rand(5 * W)
+        Xi = np.random.rand(7 * W)
 
     elif basis == "Cheby_rand":
         # Monte Carlo, W is number of nodes
@@ -159,7 +159,7 @@ def construct_cubature_1d(K, basis, j, d, s):
         "Cheby_COSAMP+",
     }:
         W = s
-        Xi = np.sin(np.pi * (np.random.rand(1 * W) - 0.5))
+        Xi = np.sin(np.pi * (np.random.rand(3 * W) - 0.5))
 
     else:
         raise ValueError(f"construct_cubature_1d for basis {basis} not defined")
