@@ -81,7 +81,7 @@ def parallel_error(a, results):
 
 
 # Load approximation results
-file_path = "results_heat_1d/s1000n64OMP+.pickle"
+file_path = Path(__file__).resolve().parent / "results_heat_1d" / "s1000n64OMP+.pickle"
 with open(file_path, "rb") as file:
     results = pickle.load(file)
 
