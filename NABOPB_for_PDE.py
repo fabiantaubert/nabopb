@@ -136,6 +136,8 @@ def NABOPB_for_PDE(
     check_naturalnumber_or_error(d, "dimensionality d")
     check_naturalnumber_or_error(sparsity_s, "parameter s")
     check_naturalnumber_or_error(sparsity_s_local, "parameter s_local")
+    if sparsity_s > sparsity_s_local:
+        raise ValueError("Parameter s must not exceed s_local.")
     check_0leq_param_or_error(delta, "parameter delta")
     check_naturalnumber_or_error(niter_r, "parameter niter_r")
     if "superpos" in gamma:
