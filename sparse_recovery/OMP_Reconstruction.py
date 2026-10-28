@@ -300,6 +300,8 @@ def OMP2(col_extractor, A, AT, normalization, b, f, p, num_iters=1500, tol=1e-7)
     N = b.size(0)
     corr = AT(b)
     x = torch.zeros_like(corr, device=device, dtype=dtype, requires_grad=False)
+    num_iters = min(num_iters, x.numel())
+    num_iters = math.floor(min(num_iters, b.size(0)))
 
     selected_indices = torch.zeros(
         num_iters, device=device, dtype=torch.long, requires_grad=False
@@ -310,8 +312,6 @@ def OMP2(col_extractor, A, AT, normalization, b, f, p, num_iters=1500, tol=1e-7)
     diag = torch.clamp(normalization.flatten(), min=eps)
     z_2 = torch.empty_like(diag)
     res = b
-    num_iters = min(num_iters, x.numel())
-    num_iters = math.floor(min(num_iters, b.size(0)))
 
     for j in range(num_iters):
         # Compute and mask correlations
