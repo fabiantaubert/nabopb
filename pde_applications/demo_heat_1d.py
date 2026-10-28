@@ -127,7 +127,7 @@ def solve_multiple(args):
 
 def solve_heat_v1(var):
     # Parallel solution of the differential equation
-    with Pool(processes=96) as pool:
+    with Pool() as pool:
         result = pool.map(solve_single, var)
 
     return np.array(result, dtype=np.complex128)
@@ -139,7 +139,7 @@ def solve_heat_v2(var1, var2, blocksize=1):
     tasks = [
         (var1[i * blocksize : (i + 1) * blocksize, :], var2[i, :]) for i in range(M)
     ]
-    with Pool(processes=96) as pool:
+    with Pool() as pool:
         result = pool.map(solve_multiple, tasks)
 
     return np.vstack(result)
