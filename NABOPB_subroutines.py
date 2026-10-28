@@ -118,10 +118,10 @@ def construct_cubature_1d(K, basis, j, d, s):
 
     Returns
     -------
-    W : xxx
-        Cubature weights (or whatever information is needed).
+    W : int, tuple, or dict
+        Reconstruction parameters required by the chosen method.
     Xi : ndarray
-        Cubature nodes.
+        One-dimensional sampling nodes.
 
     Raises
     ------
