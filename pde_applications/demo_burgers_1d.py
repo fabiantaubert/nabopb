@@ -83,8 +83,8 @@ def solve_burgers_multiple(var1_block, a_coeffs, nu=0.05, nx=1000):
         u0,
         t_eval=[1.0],
         method="Radau",
-        rtol=1e-8,
-        atol=1e-10,
+        rtol=1e-6,
+        atol=1e-8,
     )
 
     u_T = sol.y[:, 0]  # solution at t=1
