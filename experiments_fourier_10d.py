@@ -4,6 +4,11 @@ import numpy as np
 from NABOPB import NABOPB
 from bspline_test_10d import bspline_test_10d, bspline_test_10d_fouriercoeff
 
+# Dissertation, Chapter 3: 10D periodic B-spline experiment.
+# The relative L2 approximation error intentionally uses exact coefficients
+# on the detected support; the coefficient approximation error is separate.
+# Full experiments can require substantial runtime and memory.
+
 
 # --------------------------------------------------
 # settings
@@ -14,33 +19,36 @@ basis_flags = [
     "Fourier_rand",
     "Fourier_r1l",
     "Fourier_ssr1l",
-    #"Fourier_mr1l",
-    #"Fourier_OMP",
-    #"Fourier_COSAMP",
-    #"Fourier_SRLasso",
+    "Fourier_mr1l",
+    "Fourier_OMP",
+    "Fourier_COSAMP",
+    "Fourier_SRLasso",
 ]
 
-#gamma = {
-#    "type": "sym_hc",
-#    "w": 1 / 2,
-#    "N": 6,
-#    "sgn": "default",
-#}
-
+# Dissertation baseline: mirrored weighted hyperbolic cross H_128, w = 1/2.
+# Here N=7 corresponds to extension 2**N = 128.
 gamma = {
-    "type": "full",
-    "w": 1,
-    "N": 64,
+    "type": "sym_hc",
+    "w": 1 / 2,
+    "N": 7,
     "sgn": "default",
 }
+# For the full-grid experiment, replace gamma with:
+# gamma = {"type": "full", "N": 64, "sgn": "default"}
 
 diminc = {
     "type": "default",
     "workers": 0,
 }
 
-s_values = 2 ** np.arange(3, 16)   # 2^3,...,2^15
-n_repeats = 10                    
+s_values = 2 ** np.arange(3, 16)  # 2^3, ..., 2^15
+n_repeats = 10
+max_median_time = 3600.0
+
+# Output filenames reflect the selected search space (also after switching to full).
+gamma_label = f"{gamma['type']}_N{gamma['N']}"
+if gamma["type"] == "sym_hc":
+    gamma_label += f"_w{gamma['w']:g}"
 
 out_dir = Path("results_fourier")
 out_dir.mkdir(exist_ok=True)
@@ -107,8 +115,11 @@ for basis_flag in basis_flags:
             f"time={times[a]:.3f}s"
         )
         
-        if times[a] > 3600.0:
-            print(f"Stopping {basis_flag}: median time exceeded 3600s.")
+        if times[a] > max_median_time:
+            print(
+                f"Stopping {basis_flag}: median time exceeded "
+                f"{max_median_time:.0f}s."
+            )
             break
 
     results[basis_flag] = {
@@ -122,15 +133,18 @@ for basis_flag in basis_flags:
 # --------------------------------------------------
 # save full data
 # --------------------------------------------------
-save_path = out_dir / "bspline10d_fourier_full_N64_w1_part2.npz"
+save_path = out_dir / f"bspline10d_fourier_{gamma_label}.npz"
 
 np.savez(
     save_path,
     s_values=s_values,
     basis_flags=np.array(basis_flags),
+    gamma_type=gamma["type"],
     gamma_N=gamma["N"],
-    gamma_w=gamma["w"],
+    gamma_w=gamma.get("w", np.nan),
+    gamma_sgn=gamma["sgn"],
     n_repeats=n_repeats,
+    max_median_time=max_median_time,
     **{
         f"{basis}_rel_l2_fun": results[basis]["rel_l2_fun"]
         for basis in basis_flags
@@ -163,7 +177,7 @@ for quantity in ["rel_l2_fun", "coef_linf", "samples", "times"]:
 
     table = np.vstack(table).T
 
-    csv_path = out_dir / f"{quantity}_means.csv"
+    csv_path = out_dir / f"bspline10d_fourier_{gamma_label}_{quantity}_medians.csv"
     np.savetxt(
         csv_path,
         table,
