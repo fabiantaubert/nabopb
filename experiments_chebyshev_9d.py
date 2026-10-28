@@ -41,6 +41,8 @@ diminc = {
 
 s_values = 2 ** np.arange(3, 16)   # 2^3, ..., 2^15
 n_repeats = 10
+niter_r = 5
+delta = 1e-12
 max_median_time = 3600.0
 
 # Output filenames reflect the selected search space (also after switching to full).
@@ -83,6 +85,9 @@ for basis_flag in basis_flags:
                 gamma,
                 diminc,
                 int(s),
+                sparsity_s_local=int(s),
+                delta=delta,
+                niter_r=niter_r,
             )
 
             # Convert the recovered coefficients to the normalization
@@ -163,6 +168,8 @@ np.savez(
     gamma_w=gamma.get("w", np.nan),
     gamma_sgn=gamma["sgn"],
     n_repeats=n_repeats,
+    niter_r=niter_r,
+    delta=delta,
     max_median_time=max_median_time,
     **{
         f"{basis}_rel_l2_fun": results[basis]["rel_l2_fun"]
