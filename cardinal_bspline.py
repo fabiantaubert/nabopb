@@ -7662,7 +7662,7 @@ def cardinal_bspline(v, order):
                         )
                     )
                 )
-            elif j == 2:
+            elif j == 3:
                 y = 5.3414714183682392e01 + x * (
                     1.4179955730265365e02
                     + x
@@ -7734,7 +7734,7 @@ def cardinal_bspline(v, order):
                         )
                     )
                 )
-            elif j == 2:
+            elif j == 4:
                 y = -1.1511962885627518e01 + x * (
                     -3.7997394581589084e01
                     + x
@@ -7806,7 +7806,7 @@ def cardinal_bspline(v, order):
                         )
                     )
                 )
-            elif j == 2:
+            elif j == 5:
                 y = 1.3282185064293035e00 + x * (
                     4.0250172469605587e00
                     + x
@@ -7878,7 +7878,7 @@ def cardinal_bspline(v, order):
                         )
                     )
                 )
-            elif j == 2:
+            elif j == 6:
                 y = 2.8832407930647252e-01 + x * (
                     -1.3456046153066603e-01
                     + x
@@ -7950,7 +7950,7 @@ def cardinal_bspline(v, order):
                         )
                     )
                 )
-            elif j == 2:
+            elif j == 7:
                 y = 3.1464890998232264e-01 + x * (
                     8.2438194495385887e-04
                     + x
@@ -8022,7 +8022,7 @@ def cardinal_bspline(v, order):
                         )
                     )
                 )
-            elif j == 2:
+            elif j == 8:
                 y = 3.1453438341167761e-01 + x * (
                     -2.0936371923447998e-07
                     + x
@@ -8094,7 +8094,7 @@ def cardinal_bspline(v, order):
                         )
                     )
                 )
-            elif j == 2:
+            elif j == 9:
                 y = 3.1453440085864343e-01 + x * (
                     -1.6539911881522266e-14
                     + x
@@ -8238,7 +8238,7 @@ def cardinal_bspline(v, order):
                         )
                     )
                 )
-            elif j == 10:
+            elif j == 11:
                 y = 3.1453440085865236e-01 + x * (
                     9.1808310988993074e-15
                     + x
@@ -8310,7 +8310,7 @@ def cardinal_bspline(v, order):
                         )
                     )
                 )
-            elif j == 10:
+            elif j == 12:
                 y = 3.1453438341167728e-01 + x * (
                     2.0936362572978946e-07
                     + x
@@ -8382,7 +8382,7 @@ def cardinal_bspline(v, order):
                         )
                     )
                 )
-            elif j == 10:
+            elif j == 13:
                 y = 3.1464890998230444e-01 + x * (
                     -8.2438194499792584e-04
                     + x
@@ -8454,7 +8454,7 @@ def cardinal_bspline(v, order):
                         )
                     )
                 )
-            elif j == 10:
+            elif j == 14:
                 y = 2.8832407930649046e-01 + x * (
                     1.3456046153067810e-01
                     + x
@@ -8526,7 +8526,7 @@ def cardinal_bspline(v, order):
                         )
                     )
                 )
-            elif j == 10:
+            elif j == 15:
                 y = 1.3282185064293344e00 + x * (
                     -4.0250172469605285e00
                     + x
@@ -8598,7 +8598,7 @@ def cardinal_bspline(v, order):
                         )
                     )
                 )
-            elif j == 10:
+            elif j == 16:
                 y = -1.1511962885627492e01 + x * (
                     3.7997394581588985e01
                     + x
@@ -8670,7 +8670,7 @@ def cardinal_bspline(v, order):
                         )
                     )
                 )
-            elif j == 10:
+            elif j == 17:
                 y = 5.3414714183682420e01 + x * (
                     -1.4179955730265374e02
                     + x
@@ -8742,7 +8742,7 @@ def cardinal_bspline(v, order):
                         )
                     )
                 )
-            elif j == 10:
+            elif j == 18:
                 y = -9.7162005287321065e01 + x * (
                     2.1958456942775453e02
                     + x
@@ -8814,7 +8814,7 @@ def cardinal_bspline(v, order):
                         )
                     )
                 )
-            elif j == 10:
+            elif j == 19:
                 y = 6.2041726508848370e01 + x * (
                     -1.1755274496413374e02
                     + x
