@@ -101,14 +101,16 @@ def random_number(d, dims, basis, number_points=1):
 
 def construct_cubature_1d(K, basis, j, d, s):
     """
-    Construct cubature nodes `Xi` and weights `W` for a given one-dimensional candidate set `K`.
+    Construct sampling nodes `Xi` and reconstruction parameters `W`
+    for a given one-dimensional candidate set `K`.
 
     Parameters
     ----------
     K : array_like
         One-dimensional candidate set, typically represented as an array of indices.
     basis : string
-        Specifies the basis for generating the cubature nodes and weights.
+        Specifies the basis and reconstruction method for generating sampling nodes
+        and reconstruction parameters.
         See NABOPB.py for details on the currently supported cases.
     j : int
         Index corresponding to the dimension in consideration.
@@ -188,14 +190,16 @@ def construct_cubature_1d(K, basis, j, d, s):
 
 def construct_cubature(K, basis, dims, d, s, pde_dims=None):
     """
-    Construct the cubature nodes `Xi` and weights `W` for a given n-dimensional candidate set `K`.
+    Construct sampling nodes `Xi` and reconstruction parameters `W`
+    for a given n-dimensional candidate set `K`.
 
     Parameters
     ----------
     K : array_like
         n-dimensional candidate set, typically represented as an array of indices.
     basis : string
-        Specifies the basis for generating the cubature nodes and weights.
+        Specifies the basis and reconstruction method for generating sampling nodes
+        and reconstruction parameters.
         See `NABOPB.py` for details on the currently supported cases.
     dims : array_like
         List of fixed dimensions from the set {1, ..., d}.
