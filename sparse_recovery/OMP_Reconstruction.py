@@ -135,14 +135,6 @@ def OMP2_Fourier(
     N = b.size(0)
     M = normalization.size(0)
 
-    A_mat, atom_map = build_explicit_A(p, f, dtype=torch.double)
-
-    print("A shape:", A_mat.shape)
-    print("rank:", torch.linalg.matrix_rank(A_mat).item())
-    print("cond(A):", torch.linalg.cond(A_mat).item())
-    # print("cond(A^T A):", torch.linalg.cond(A_mat.T @ A_mat).item())
-    # print("cond(A A^T):", torch.linalg.cond(A_mat @ A_mat.T).item())
-
     # Per-frequency Frobenius norm of the [col_cos | col_sin] block, shape (M,)
     norm_freq = normalization.norm(dim=-1).clamp(min=eps)
 
