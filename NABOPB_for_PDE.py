@@ -1,6 +1,5 @@
 import numpy as np
 import time
-from multiprocessing import Pool
 import NABOPB_subroutines as nabopb
 
 
@@ -61,7 +60,7 @@ def NABOPB_for_PDE(
     diminc : dict, optional
         Specifies the dimension-incremental strategy. Possible keys include:
         - 'workers': Maximum number of parallel workers.
-        - 'type': Strategy type ('default' or 'dyadic').
+        - 'type': Strategy type ('default').
 
     sparsity_s : int, optional
         Target sparsity of the output. Default is (2 * N_gamma + 1)^d.
@@ -211,100 +210,6 @@ def NABOPB_for_PDE(
             run_times[:3] += run_times_j
         sortIdx = np.argsort(I[(1, 2)])
         index = I[(1, 1)][:, sortIdx]
-        print(f"Algorithm finished with {index.shape[0]} detected indices.\n\n")
-        run_times[3] = time.time() - tAll
-    # TO CHECK
-    elif diminc["type"] == "dyadic":
-        # Preallocation
-        I = {(d, 2): []}
-        # 1D-detections
-        print("Step 1:")
-        with Pool(diminc["workers"]) as pool:
-            async_detections = [
-                pool.apply_async(
-                    detect_1D,
-                    (
-                        j,
-                        fct_handle,
-                        d,
-                        gamma,
-                        basis_flag,
-                        sparsity_s_local,
-                        delta,
-                        niter_r,
-                    ),
-                )
-                for j in range(1, d + 1)
-            ]
-            for j, detection in enumerate(async_detections):
-                temp, sample_sizes_j, cand_sizes_j, run_times_j = detection.get()
-                # I[(j + 1, :)] = temp, j + 1
-                sample_sizes[0] += sample_sizes_j
-                cand_sizes[0] += cand_sizes_j
-                run_times[:3] += run_times_j
-        # Step 2
-        sample_sizes_j = 0
-        cand_sizes_j = 0
-        run_times_j = np.zeros(3)
-        J = {(1, 2): []}
-        while len(I) > 2:
-            with Pool(diminc["workers"]) as pool:
-                async_increments = [
-                    pool.apply_async(
-                        increment,
-                        (
-                            I[2 * k - 1],
-                            I[2 * k],
-                            fct_handle,
-                            d,
-                            gamma,
-                            basis_flag,
-                            sparsity_s,
-                            sparsity_s_local,
-                            delta,
-                            niter_r,
-                        ),
-                    )
-                    for k in range(1, len(I) // 2 + 1)
-                ]
-                for k, increment_result in enumerate(async_increments):
-                    (
-                        tempA,
-                        tempB,
-                        _,
-                        sample_sizes_j,
-                        cand_sizes_j,
-                        run_times_j,
-                    ) = increment_result.get()
-                    # J[(k + 1, :)] = tempA, tempB
-                    sample_sizes[len(J[(k + 1, 2)])] += sample_sizes_j
-                    cand_sizes[len(J[(k + 1, 2)])] += cand_sizes_j
-                    run_times[:3] += run_times_j
-            if len(I) % 2 == 1:
-                # J[(len(J) + 1, :)] = I[len(I) - 1]
-                pass
-            len_J = [len(J[(l + 1, 2)]) for l in range(len(J))]
-            sortIdx = np.argsort(len_J)
-            I = {(l + 1, 1): J[(sortIdx[l] + 1, 1)] for l in range(len(sortIdx))}
-            J = {(1, 2): []}
-        # Final increment
-        tempA, tempB, val, sample_sizes_j, cand_sizes_j, run_times_j = increment(
-            I,
-            fct_handle,
-            d,
-            gamma,
-            basis_flag,
-            sparsity_s,
-            sparsity_s_local,
-            delta,
-            niter_r,
-        )
-        # J[(1, :)] = tempA, tempB
-        sample_sizes[d - 1] += sample_sizes_j
-        cand_sizes[d - 1] += cand_sizes_j
-        run_times[:3] += run_times_j
-        sortIdx = np.argsort(J[(1, 2)])
-        index = J[(1, 1)][:, sortIdx]
         print(f"Algorithm finished with {index.shape[0]} detected indices.\n\n")
         run_times[3] = time.time() - tAll
     else:
