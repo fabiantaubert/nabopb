@@ -1,3 +1,4 @@
+from pathlib import Path
 import numpy as np
 import pickle
 import matplotlib.pyplot as plt
@@ -34,7 +35,7 @@ def true_solution(x):
 
 
 # Load approximation results
-file_path = "results_ode_pwc/s100n16.pickle"
+file_path = Path(__file__).resolve().parent / "results_ode_pwc" / "s100n16.pickle"
 with open(file_path, "rb") as file:
     results = pickle.load(file)
 
