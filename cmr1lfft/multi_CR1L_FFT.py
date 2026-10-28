@@ -44,7 +44,7 @@ def multi_CR1L_FFT(phat, I, multi_lattice, tflag='notransp'):
     reco_infos = multi_lattice['reco_infos']
 
     if tflag == 'notransp':
-        p = np.zeros((sum(Ms) - len(Ms)) // 2 + 1, dtype=np.complex64)
+        p = np.zeros((sum(Ms) - len(Ms)) // 2 + 1, dtype=np.complex128)
         reco_infos['cur_j'] = 1
         p[:(Ms[0] + 1) // 2] = single_CR1L_FFT_new(phat, I, zs[0], Ms[0], tflag, reco_infos)
         zaehler = (Ms[0] + 1) // 2
@@ -55,23 +55,23 @@ def multi_CR1L_FFT(phat, I, multi_lattice, tflag='notransp'):
             zaehler += (Ms[j] - 1) // 2
 
     elif tflag == 'transp':
-        p = np.zeros(I.shape[0], dtype=np.complex64)
+        p = np.zeros(I.shape[0], dtype=np.complex128)
         reco_infos['cur_j'] = 1
         p = single_CR1L_FFT_new(phat[:(Ms[0] + 1) // 2], I, zs[0], Ms[0], tflag, reco_infos)
         zaehler = (Ms[0] + 1) // 2
         for j in range(1, len(Ms)):
             reco_infos['cur_j'] = j + 1
-            tmp = np.zeros(1, dtype=np.complex64)
+            tmp = np.zeros(1, dtype=np.complex128)
             tmp = np.append(tmp, phat[zaehler:zaehler + (Ms[j] - 1) // 2])
             zaehler += (Ms[j] - 1) // 2
             p += single_CR1L_FFT_new(tmp, I, zs[j], Ms[j], tflag, reco_infos)
 
     elif tflag == 'notransp-transp':
-        p = np.zeros_like(phat, dtype=np.complex64)
+        p = np.zeros_like(phat, dtype=np.complex128)
         for t in range(phat.shape[1]):
-            ptmp = np.zeros((sum(Ms) - len(Ms)) // 2 + 1, dtype=np.complex64)
+            ptmp = np.zeros((sum(Ms) - len(Ms)) // 2 + 1, dtype=np.complex128)
             phattmp = phat[:, t]
-            fhat = np.zeros(len(reco_infos['M_I_index_I']), dtype=np.complex64)
+            fhat = np.zeros(len(reco_infos['M_I_index_I']), dtype=np.complex128)
             fhat = phattmp[reco_infos['M_I_index_I']] / (2.0 ** (np.sum(I[reco_infos['M_I_index_I']] != 0, axis=1) / 2))
             fhat1 = np.bincount(reco_infos['kz_mod_M'][0], weights=fhat, minlength=Ms[0])
             f = Ms[0] * ifft(fhat1)
@@ -79,14 +79,14 @@ def multi_CR1L_FFT(phat, I, multi_lattice, tflag='notransp'):
 
             zaehler = (Ms[0] + 1) // 2
             for j in range(1, len(Ms)):
-                fhat = np.zeros(len(reco_infos['M_I_index_I']), dtype=np.complex64)
+                fhat = np.zeros(len(reco_infos['M_I_index_I']), dtype=np.complex128)
                 fhat = phattmp[reco_infos['M_I_index_I']] / (2.0 ** (np.sum(I[reco_infos['M_I_index_I']] != 0, axis=1) / 2))
                 fhat1 = np.bincount(reco_infos['kz_mod_M'][j], weights=fhat, minlength=Ms[j])
                 f = Ms[j] * ifft(fhat1)
                 ptmp[zaehler:zaehler + (Ms[j] - 1) // 2] = f[1:(Ms[j] + 1) // 2]
                 zaehler += (Ms[j] - 1) // 2
 
-            ptmp1 = np.zeros(Ms[0], dtype=np.complex64)
+            ptmp1 = np.zeros(Ms[0], dtype=np.complex128)
             ptmp1[:(Ms[0] + 1) // 2] = ptmp[:(Ms[0] + 1) // 2]
             ghat = fft(ptmp1)
             fhat = ghat[reco_infos['kz_mod_M'][0]]
@@ -94,7 +94,7 @@ def multi_CR1L_FFT(phat, I, multi_lattice, tflag='notransp'):
 
             zaehler = (Ms[0] + 1) // 2
             for j in range(1, len(Ms)):
-                ptmp1 = np.zeros(Ms[j], dtype=np.complex64)
+                ptmp1 = np.zeros(Ms[j], dtype=np.complex128)
                 ptmp1[1:(Ms[j] + 1) // 2] = ptmp[zaehler:zaehler + (Ms[j] - 1) // 2]
                 zaehler += (Ms[j] - 1) // 2
                 ghat = fft(ptmp1)
@@ -111,7 +111,7 @@ def single_CR1L_FFT_new(phat, I, z, M, tflag, reco_infos):
         M_I_index_I = reco_infos['M_I_index_I']
         k = reco_infos['kz_mod_M'][reco_infos['cur_j'] - 1]
 
-        fhat = np.zeros(len(M_I_index_I), dtype=np.complex64)
+        fhat = np.zeros(len(M_I_index_I), dtype=np.complex128)
         fhat = phat[M_I_index_I-1] / (2.0 ** (np.sum(I[M_I_index_I-1] != 0, axis=1) / 2))
         fhat1 = np.bincount(k, weights=np.real(fhat), minlength=M) + 1j * np.bincount(k, weights=np.imag(fhat), minlength=M)
         f = M * ifft(fhat1)
