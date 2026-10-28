@@ -1,4 +1,5 @@
 from pathlib import Path
+import csv
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
@@ -12,7 +13,7 @@ def solve_pois1d(x, a):
         raise ValueError("N is not an integer.")
     N = int(N)
 
-    ind = np.linspace(-N, N, 2 * N + 1)  # Index range from -N to N
+    ind = np.arange(-N, N + 1)  # Index range from -N to N
 
     # Transform spatial variable x from [-1, 1] to [0, 1]
     x = (x + 1) / 2
@@ -22,7 +23,7 @@ def solve_pois1d(x, a):
         temp = (
             a
             / (4 * np.pi**2 * ind**2)
-            * (np.cos(2 * np.pi * np.expand_dims(ind, 0) * np.expand_dims(x, 1)) - 1)
+            * (np.exp(2j * np.pi * np.expand_dims(ind, 0) * np.expand_dims(x, 1)) - 1)
         )
     val = a[N] / 2 * x * (1 - x) + np.nansum(temp, axis=1)
 
@@ -64,53 +65,50 @@ def single_error(args):
     return np.linalg.norm(ex_sol - approx_sol, 2) / np.linalg.norm(ex_sol, 2)
 
 
-def parallel_error(N, results):
-    # Random draws of a
-    a = np.random.rand(N, 9) * 2 - 1
+def parallel_error(N, results, real_bound=1.0, imag_bound=0.0):
+    # Draw parameter vectors in the specified real or complex test domain.
+    a = (np.random.rand(N, 9) * 2 - 1) * real_bound
+    if imag_bound > 0:
+        a = a + 1j * (np.random.rand(N, 9) * 2 - 1) * imag_bound
 
-    # Set spatial points
     x = np.linspace(-1, 1, 1000)
-
-    # Prepare arguments for parallel processing
     args = [(i, a, x, results) for i in range(N)]
 
-    # Parallel error computation
     with Pool() as pool:
         err = pool.map(single_error, args)
 
-    return np.array(err)
+    return np.asarray(err)
 
 
 # Load approximation results
-file_path = Path(__file__).resolve().parent / "results_pois_1d_f" / "s1000n64rlasso.pickle"  # cos exp tauschen
+file_path = Path(__file__).resolve().parent / "results_pois_1d_f" / "s1000n64test.pickle"
 with open(file_path, "rb") as file:
     results = pickle.load(file)
 
-# Run error computation
-err = parallel_error(10**2, results)
+# Reproduce the five domains from the dissertation (10,000 draws each).
+np.random.seed(42)
+test_domains = [
+    (1, 0),  # [-1,1]^9
+    (2, 0),  # [-2,2]^9
+    (4, 0),  # [-4,4]^9
+    (1, 1),  # [-1,1]^9 + i[-1,1]^9
+    (2, 2),  # [-2,2]^9 + i[-2,2]^9
+]
+errs = [
+    parallel_error(10**4, results, real_bound, imag_bound)
+    for real_bound, imag_bound in test_domains
+]
 
-# Plot the error
-plt.figure(figsize=(8, 2.5))
-plt.boxplot(
-    err,
-    vert=False,
-    widths=0.5,
-    patch_artist=True,
-    boxprops=dict(facecolor="lightblue", color="blue"),
-    medianprops=dict(color="darkblue"),
-    whiskerprops=dict(color="blue"),
-    capprops=dict(color="blue"),
-    flierprops=dict(
-        markerfacecolor="blue",
-        marker="o",
-        markersize=3,
-        linestyle="none",
-        markeredgecolor="none",
-    ),
-)
-plt.xscale("log")
-plt.xlabel("Relative $L^2$ error (log scale)", fontsize=12)
-plt.title("Boxplot of relative $L^2$ Errors for the 1D Poisson equation", fontsize=13)
-plt.grid(True, axis="x", linestyle="--", alpha=0.6)
-plt.tight_layout()
-plt.show()
+# Five rows (one per domain): minimum, Q1, median, Q3, maximum.
+csv_path = Path(__file__).resolve().parent / "results_pois_1d_f" / "boxerr.csv"
+with open(csv_path, "w", newline="") as file:
+    writer = csv.writer(file)
+    for err in errs:
+        writer.writerow([
+            np.min(err),
+            np.percentile(err, 25),
+            np.median(err),
+            np.percentile(err, 75),
+            np.max(err),
+        ])
+print(f"Saved {csv_path}")
