@@ -47,11 +47,13 @@ def random_number(d, dims, basis, number_points=1):
     basis : string
         Specifies the basis for generating the random anchor. See NABOPB.py
         for details on the currently supported cases.
+    number_points : int, optional
+        Number of random anchor points to generate. Default is 1.
 
     Returns
     -------
     x_tilde : ndarray
-        The generated random anchor, an array of shape `(1, d - len(dims))`.
+        Random anchor points of shape (number_points, d - len(dims)).
 
     Raises
     ------
