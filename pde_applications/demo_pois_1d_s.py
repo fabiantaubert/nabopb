@@ -61,7 +61,7 @@ def solve_single(args):
     sol = solve_bvp(lambda t, y: bvpfcn(t, y, a, m), bcfcn, xmesh, y_guess, tol=tol)
 
     # Return solution at x
-    return np.interp(x, sol.x, sol.y[0])
+    return sol.sol(x)[0]
 
 
 def solve_pois1d(var, tol=1e-6):
