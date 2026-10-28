@@ -140,7 +140,6 @@ def NABOPB(
         # Preallocation
         I = {(2, 2): []}
         # First 1D-detection
-        print("Step 1:")
         I[(1, 1)], sample_sizes_j, cand_sizes_j, run_times_j = detect_1D(
             np.array([1]),
             fct_handle,
@@ -152,13 +151,11 @@ def NABOPB(
             niter_r,
         )
         if I[(1, 1)].shape[0] == 0:
-            raise ValueError("No indices were detected in step 1 (dimension 1).")
+            raise ValueError("No indices were detected during 1D detection for dimension 1.")
         sample_sizes[0] += sample_sizes_j
         cand_sizes[0] += cand_sizes_j
         run_times[:3] += run_times_j
         I[(1, 2)] = np.array([1])
-        # Step 2
-        print("Step 2:")
         for t in range(2, d + 1):
             # New 1D-detection
             I[(2, 1)], sample_sizes_j, cand_sizes_j, run_times_j = detect_1D(
@@ -173,7 +170,7 @@ def NABOPB(
             )
             if I[(2, 1)].shape[0] == 0:
                 raise ValueError(
-                    f"No indices were detected in step 2 (1D detection for dimension {t})."
+                    f"No indices were detected during 1D detection for dimension {t}."
                 )
             sample_sizes[0] += sample_sizes_j
             cand_sizes[0] += cand_sizes_j
@@ -200,7 +197,7 @@ def NABOPB(
             )
             if I[(1, 1)].shape[0] == 0:
                 raise ValueError(
-                    f"No indices were detected in step 2 (increment up to dimension {t})."
+                    f"No indices were detected during the increment to dimension {t}."
                 )
             sample_sizes[t - 1] += sample_sizes_j
             cand_sizes[t - 1] += cand_sizes_j
