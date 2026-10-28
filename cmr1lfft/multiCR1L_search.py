@@ -223,6 +223,14 @@ def multiCR1L_improved_Idec(I, L, MI=None, MI_index_I=None):
     else:
         reco_infos = {"M_I_index_I": MI_index_I, "M_I": MI}
 
+    # A singleton mirrored set contains only the zero multi-index.
+    if MI.shape[0] == 1:
+        return (
+            np.zeros((1, I.shape[1]), dtype=int),
+            np.array([3], dtype=int),
+            reco_infos,
+        )
+
     c = 2
     N = np.max(I)
     Mtmp = int(nextprime(max(2 * (MI.shape[0] - 1), max(2 * N + 1, 3)) - 0.5))
