@@ -62,7 +62,9 @@ def NABOPB(
         - 'type': Strategy type ('default').
 
     sparsity_s : int, optional
-        Target sparsity of the output. Default is (2 * N_gamma + 1)^d.
+        Target sparsity of the output. Defaults to (2*N+1)^d
+        for scalar N and the product of (2*N_j+1) over all
+        dimensions for array-valued N.
 
     sparsity_s_local : int, optional
         Local target sparsity for intermediate steps.
