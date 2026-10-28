@@ -23,7 +23,7 @@ def solve_pois1d(var):
         raise ValueError("N is not an integer.")
     N = int(N)
 
-    ind = np.linspace(-N, N, 2 * N + 1)  # Index range from -N to N
+    ind = np.arange(-N, N + 1)  # Index range from -N to N
 
     # Transform spatial variable x from [-1, 1] to [0, 1]
     x = (x + 1) / 2
@@ -33,7 +33,7 @@ def solve_pois1d(var):
         temp = (
             a
             / (4 * np.pi**2 * ind**2)
-            * (np.cos(2 * np.pi * np.expand_dims(ind, 0) * np.expand_dims(x, 1)) - 1)
+            * (np.exp(2j * np.pi * np.expand_dims(ind, 0) * np.expand_dims(x, 1)) - 1)
         )
     val = a[:, N] / 2 * x * (1 - x) + np.nansum(temp, axis=1)
 
@@ -44,8 +44,7 @@ def solve_pois1d(var):
 d = 10  # Total dimensions: 1 spatial dimension + 9 parameter dimensions
 s = 1000  # sparsity
 
-basis_flag = "Cheby_SRLasso"  # Specifies approximation basis and cubature method
-# cos exp tauschen
+basis_flag = "Cheby_mr1l"  # Specifies approximation basis and cubature method
 gamma = {  # Define the search space Gamma
     "type": "full",
     "N": 64,
@@ -68,7 +67,7 @@ def build_filename(s, N, optional=""):
 
 # Set folder, create file path. Note: Use 'optional' to save multiple versions with same s and N.
 folder = Path(__file__).resolve().parent / "results_pois_1d_f"
-file_path = os.path.join(folder, build_filename(s, gamma["N"], optional="rlasso"))
+file_path = os.path.join(folder, build_filename(s, gamma["N"], optional="test"))
 
 if not os.path.exists(folder):
     os.makedirs(folder)
