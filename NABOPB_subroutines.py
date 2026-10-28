@@ -19,6 +19,21 @@ else:
     prec_type = torch.double
 
 
+def real_samples_for_sparse_recovery(f):
+    """Return real-valued samples, allowing negligible imaginary roundoff."""
+    if np.iscomplexobj(f):
+        imag_max = np.max(np.abs(f.imag))
+        scale = np.max(np.abs(f))
+
+        if imag_max > 1e-14 + 1e-12 * scale:
+            raise ValueError(
+                "Sparse recovery requires real-valued function samples."
+            )
+
+        f = f.real
+
+    return f
+
 def random_number(d, dims, basis, number_points=1):
     """
     Draw a random anchor `x_tilde` in the remaining dimensions according to the specified basis.
@@ -369,7 +384,7 @@ def evaluate_cubature_1d(W, Xi, f, K, basis, j, d):
         # Start LASSO
         samples = torch.from_numpy(Xi).to(prec_type).to(device).requires_grad_(False)
         values = (
-            torch.from_numpy(f)
+            torch.from_numpy(real_samples_for_sparse_recovery(f))
             .to(prec_type)
             .view(-1, 1)
             .to(device)
@@ -388,7 +403,7 @@ def evaluate_cubature_1d(W, Xi, f, K, basis, j, d):
         # Start OMP
         samples = torch.from_numpy(Xi).to(prec_type).to(device).requires_grad_(False)
         values = (
-            torch.from_numpy(f)
+            torch.from_numpy(real_samples_for_sparse_recovery(f))
             .to(prec_type)
             .view(-1, 1)
             .to(device)
@@ -407,7 +422,7 @@ def evaluate_cubature_1d(W, Xi, f, K, basis, j, d):
         # Start COSAMP
         samples = torch.from_numpy(Xi).to(prec_type).to(device).requires_grad_(False)
         values = (
-            torch.from_numpy(f)
+            torch.from_numpy(real_samples_for_sparse_recovery(f))
             .to(prec_type)
             .view(-1, 1)
             .to(device)
@@ -422,7 +437,7 @@ def evaluate_cubature_1d(W, Xi, f, K, basis, j, d):
     elif basis in ["Cheby_SRLasso", "Cheby_SRLasso+"]:
         samples = torch.from_numpy(Xi).to(prec_type).to(device).requires_grad_(False)
         values = (
-            torch.from_numpy(f)
+            torch.from_numpy(real_samples_for_sparse_recovery(f))
             .to(prec_type)
             .view(-1, 1)
             .to(device)
@@ -434,7 +449,7 @@ def evaluate_cubature_1d(W, Xi, f, K, basis, j, d):
     elif basis in ["Cheby_OMP", "Cheby_OMP+"]:
         samples = torch.from_numpy(Xi).to(prec_type).to(device).requires_grad_(False)
         values = (
-            torch.from_numpy(f)
+            torch.from_numpy(real_samples_for_sparse_recovery(f))
             .to(prec_type)
             .view(-1, 1)
             .to(device)
@@ -446,7 +461,7 @@ def evaluate_cubature_1d(W, Xi, f, K, basis, j, d):
     elif basis in ["Cheby_COSAMP", "Cheby_COSAMP+"]:
         samples = torch.from_numpy(Xi).to(prec_type).to(device).requires_grad_(False)
         values = (
-            torch.from_numpy(f)
+            torch.from_numpy(real_samples_for_sparse_recovery(f))
             .to(prec_type)
             .view(-1, 1)
             .to(device)
@@ -535,7 +550,7 @@ def evaluate_cubature(W, Xi, f, K, basis, dims, d):
         # Start LASSO
         samples = torch.from_numpy(Xi).to(prec_type).to(device).requires_grad_(False)
         values = (
-            torch.from_numpy(f)
+            torch.from_numpy(real_samples_for_sparse_recovery(f))
             .to(prec_type)
             .view(-1, 1)
             .to(device)
@@ -554,7 +569,7 @@ def evaluate_cubature(W, Xi, f, K, basis, dims, d):
         # Start OMP
         samples = torch.from_numpy(Xi).to(prec_type).to(device).requires_grad_(False)
         values = (
-            torch.from_numpy(f)
+            torch.from_numpy(real_samples_for_sparse_recovery(f))
             .to(prec_type)
             .view(-1, 1)
             .to(device)
@@ -573,7 +588,7 @@ def evaluate_cubature(W, Xi, f, K, basis, dims, d):
         # Start COSAMP
         samples = torch.from_numpy(Xi).to(prec_type).to(device).requires_grad_(False)
         values = (
-            torch.from_numpy(f)
+            torch.from_numpy(real_samples_for_sparse_recovery(f))
             .to(prec_type)
             .view(-1, 1)
             .to(device)
@@ -613,7 +628,7 @@ def evaluate_cubature(W, Xi, f, K, basis, dims, d):
     elif basis in ["Cheby_SRLasso", "Cheby_SRLasso+"]:
         samples = torch.from_numpy(Xi).to(prec_type).to(device).requires_grad_(False)
         values = (
-            torch.from_numpy(f)
+            torch.from_numpy(real_samples_for_sparse_recovery(f))
             .to(prec_type)
             .view(-1, 1)
             .to(device)
@@ -625,7 +640,7 @@ def evaluate_cubature(W, Xi, f, K, basis, dims, d):
     elif basis in ["Cheby_OMP", "Cheby_OMP+"]:
         samples = torch.from_numpy(Xi).to(prec_type).to(device).requires_grad_(False)
         values = (
-            torch.from_numpy(f)
+            torch.from_numpy(real_samples_for_sparse_recovery(f))
             .to(prec_type)
             .view(-1, 1)
             .to(device)
@@ -637,7 +652,7 @@ def evaluate_cubature(W, Xi, f, K, basis, dims, d):
     elif basis in ["Cheby_COSAMP", "Cheby_COSAMP+"]:
         samples = torch.from_numpy(Xi).to(prec_type).to(device).requires_grad_(False)
         values = (
-            torch.from_numpy(f)
+            torch.from_numpy(real_samples_for_sparse_recovery(f))
             .to(prec_type)
             .view(-1, 1)
             .to(device)
