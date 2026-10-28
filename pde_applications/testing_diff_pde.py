@@ -135,7 +135,7 @@ def parallel_error(y, results):
 
 
 # Load approximation results
-file_path = "results_diff_pde/s1000n64OMP+.pickle"
+file_path = Path(__file__).resolve().parent / "results_diff_pde" / "s1000n64OMP+.pickle"
 with open(file_path, "rb") as file:
     results = pickle.load(file)
 
