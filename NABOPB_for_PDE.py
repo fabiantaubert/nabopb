@@ -123,7 +123,12 @@ def NABOPB_for_PDE(
     if diminc is None:
         diminc = {"type": "default"}
     if sparsity_s is None:
-        sparsity_s = (2 * gamma["N"] + 1) ** d
+        if np.isscalar(gamma["N"]):
+            sparsity_s = (2 * gamma["N"] + 1) ** d
+        else:
+            sparsity_s = 1
+            for N_j in gamma["N"]:
+                sparsity_s *= 2 * int(N_j) + 1
     if sparsity_s_local is None:
         sparsity_s_local = sparsity_s
 
