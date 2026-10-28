@@ -480,7 +480,7 @@ def evaluate_cubature_1d(W, Xi, f, K, basis, j, d):
         f_hat_temp, _ = COSAMP_Chebyshev(samples, values, indices, sparsity=W, tol=1e-5)
         f_hat = f_hat_temp.detach().cpu().numpy().reshape(-1)
     else:
-        raise ValueError(f"evaluate_quadrature_1d for basis {basis} not defined")
+        raise ValueError(f"evaluate_cubature_1d for basis {basis} not defined")
 
     return f_hat
 
@@ -672,7 +672,7 @@ def evaluate_cubature(W, Xi, f, K, basis, dims, d):
         f_hat_temp, _ = COSAMP_Chebyshev(samples, values, indices, sparsity=W, tol=1e-5)
         f_hat = f_hat_temp.detach().cpu().numpy().reshape(-1)
     else:
-        raise ValueError(f"evaluate_quadrature for basis {basis} not defined")
+        raise ValueError(f"evaluate_cubature for basis {basis} not defined")
 
     return f_hat
 
