@@ -1,3 +1,4 @@
+from pathlib import Path
 import numpy as np
 import os
 import sys
@@ -66,7 +67,7 @@ def build_filename(s, N, optional=""):
 
 
 # Set folder, create file path. Note: Use 'optional' to save multiple versions with same s and N.
-folder = "results_pois_1d_f"
+folder = Path(__file__).resolve().parent / "results_pois_1d_f"
 file_path = os.path.join(folder, build_filename(s, gamma["N"], optional="rlasso"))
 
 if not os.path.exists(folder):
