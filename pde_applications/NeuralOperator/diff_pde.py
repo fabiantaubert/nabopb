@@ -114,7 +114,7 @@ def create_diff_pde(
     n_train: int,
     n_test: int,
     n_modes: int = 20,
-    n_cores: int = 1,
+    n_cores: int | None = None,
 ):
     """
     Generate and save a dataset for the parametric diffusion equation.
@@ -128,13 +128,13 @@ def create_diff_pde(
     n_modes : int, optional
         Number of terms in the coefficient expansion (default: 20).
     n_cores : int, optional
-        Number of processes used for parallel PDE solves (default: 1).
+        Number of processes for parallel PDE solves (default: automatic).
     """
 
     y_train = np.random.uniform(-1, 1, (n_train, n_modes))
     y_test = np.random.uniform(-1, 1, (n_test, n_modes))
 
-    with Pool(n_cores) as pool:
+    with Pool(processes=n_cores) as pool:
         train_results = pool.map(_solve_worker, y_train)
         test_results = pool.map(_solve_worker, y_test)
 
@@ -150,7 +150,7 @@ def create_diff_pde(
     u_test = np.stack(u_test, axis=0)
     u_test = torch.from_numpy(u_test).unsqueeze(1)
 
-    out_dir = Path("diffusion_data") / f"train{n_train}_test{n_test}"
+    out_dir = Path(__file__).resolve().parent / "diffusion_data" / f"train{n_train}_test{n_test}"
     out_dir.mkdir(parents=True, exist_ok=True)
 
     torch.save(a_train, out_dir / "a_train.pt")
@@ -206,6 +206,6 @@ def load_diff_pde(path, batch_size, test_batch_size, dtype=torch.float):
 
 if __name__ == "__main__":
     start = time.time()
-    create_diff_pde(n_train=85000, n_test=1000, n_cores=96)
+    create_diff_pde(n_train=85000, n_test=1000)
     end = time.time()
     print(f"Generation took {end - start:.2f} seconds.")
