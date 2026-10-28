@@ -76,25 +76,15 @@ def NABOPB(
 
     Returns:
     --------
-    index : ndarray
-        Detected indices corresponding to the largest basis coefficients,
-        of shape [#index, d].
-
-    val : ndarray
-        Corresponding basis coefficients.
-
-    sample_sizes : list
-        Number of samples used in each dimension-incremental step.
-
-    cand_sizes : list
-        Cardinality of candidate sets used.
-
-    run_times : dict
-        Computation times for various steps:
-        - 'quadrature': Total time for quadrature construction.
-        - 'sampling': Total time for sampling.
-        - 'evaluation': Total time for quadrature evaluation.
-        - 'total': Total runtime of the algorithm.
+    result : dict
+        Dictionary containing:
+        - 'index': Detected indices, ndarray of shape (#indices, d).
+        - 'val': Corresponding basis coefficients, ndarray.
+        - 'sample_sizes': Sample counts, ndarray of length d.
+        - 'cand_sizes': Candidate-set sizes, ndarray of length d.
+        - 'run_times': Runtime statistics, ndarray of length 4,
+          containing construction, sampling, evaluation, and
+          total runtime, in that order.
 
     References:
     -----------
