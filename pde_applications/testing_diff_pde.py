@@ -1,3 +1,4 @@
+from pathlib import Path
 import numpy as np
 from mpmath import zeta
 import pickle
@@ -140,7 +141,7 @@ with open(file_path, "rb") as file:
 
 # Run error computation
 # err = parallel_error_random(10 ** 4, results)
-y_test = np.load("diff_pde_testset_10000.npy")
+y_test = np.load(Path(__file__).resolve().parent / "diff_pde_testset_10000.npy")
 err = parallel_error(y_test, results)
 
 # Plot the error
