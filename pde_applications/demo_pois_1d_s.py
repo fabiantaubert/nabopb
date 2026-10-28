@@ -1,3 +1,4 @@
+from pathlib import Path
 import numpy as np
 from scipy.integrate import solve_bvp
 from multiprocessing import Pool
@@ -99,7 +100,7 @@ def build_filename(s, N, optional=""):
 
 
 # Set folder, create file path. Note: Use 'optional' to save multiple versions with same s and N.
-folder = "results_pois_1d_s"
+folder = Path(__file__).resolve().parent / "results_pois_1d_s"
 file_path = os.path.join(folder, build_filename(s, gamma["N"], optional=""))
 
 if not os.path.exists(folder):
