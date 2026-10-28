@@ -4,6 +4,11 @@ import numpy as np
 from NABOPB import NABOPB
 from bsplinet_test_9d import bsplinet_test_9d, bsplinet_test_9d_chat
 
+# Dissertation, Chapter 3: 9D nonperiodic B-spline experiment.
+# The relative L2 approximation error intentionally uses exact coefficients
+# on the detected support; the coefficient approximation error is separate.
+# Full experiments can require substantial runtime and memory.
+
 
 # --------------------------------------------------
 # settings
@@ -11,19 +16,23 @@ from bsplinet_test_9d import bsplinet_test_9d, bsplinet_test_9d_chat
 d = 9
 
 basis_flags = [
- #   "Cheby_rand",
- #   "Cheby_mr1l",
- #   "Cheby_OMP",
- #   "Cheby_COSAMP",
+    "Cheby_rand",
+    "Cheby_mr1l",
+    "Cheby_OMP",
+    "Cheby_COSAMP",
     "Cheby_SRLasso",
 ]
 
+# Dissertation baseline: weighted hyperbolic cross H_128, w = 1/2.
+# Here N=7 corresponds to extension 2**N = 128.
 gamma = {
     "type": "sym_hc",
     "w": 1 / 2,
-    "N": 8,
+    "N": 7,
     "sgn": "non-negative",
 }
+# For a nonnegative full grid instead, replace gamma with:
+# gamma = {"type": "full", "N": 64, "sgn": "non-negative"}
 
 diminc = {
     "type": "default",
@@ -31,8 +40,13 @@ diminc = {
 }
 
 s_values = 2 ** np.arange(3, 16)   # 2^3, ..., 2^15
-n_repeats = 3
+n_repeats = 10
 max_median_time = 3600.0
+
+# Output filenames reflect the selected search space (also after switching to full).
+gamma_label = f"{gamma['type']}_N{gamma['N']}"
+if gamma["type"] == "sym_hc":
+    gamma_label += f"_w{gamma['w']:g}"
 
 out_dir = Path("results_cheby")
 out_dir.mkdir(parents=True, exist_ok=True)
@@ -138,7 +152,7 @@ for basis_flag in basis_flags:
 # --------------------------------------------------
 # save complete median data
 # --------------------------------------------------
-save_path = out_dir / "bsplinet9d_cheby_symhc_N8_w12_LASSO.npz"
+save_path = out_dir / f"bsplinet9d_cheby_{gamma_label}.npz"
 
 np.savez(
     save_path,
@@ -146,7 +160,8 @@ np.savez(
     basis_flags=np.array(basis_flags),
     gamma_type=gamma["type"],
     gamma_N=gamma["N"],
-    gamma_w=gamma["w"],
+    gamma_w=gamma.get("w", np.nan),
+    gamma_sgn=gamma["sgn"],
     n_repeats=n_repeats,
     max_median_time=max_median_time,
     **{
@@ -183,7 +198,7 @@ for quantity in ["rel_l2_fun", "coef_linf", "samples", "times"]:
 
     table = np.vstack(table).T
 
-    csv_path = out_dir / f"cheby_{quantity}_medians_LASSO.csv"
+    csv_path = out_dir / f"bsplinet9d_cheby_{gamma_label}_{quantity}_medians.csv"
 
     np.savetxt(
         csv_path,
