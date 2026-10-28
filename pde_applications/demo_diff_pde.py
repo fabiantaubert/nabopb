@@ -174,14 +174,14 @@ def solve_multiple(args):
     return solve_pde_at_multiple_points(var1_block, y_coeffs)
 
 
-def solve_diff_v2(var1, var2, blocksize=1, n_cores=96):
+def solve_diff_v2(var1, var2, blocksize=1):
     M = var2.shape[0]
 
     tasks = [
         (var1[i * blocksize : (i + 1) * blocksize, :], var2[i, :]) for i in range(M)
     ]
 
-    with Pool(processes=n_cores) as pool:
+    with Pool() as pool:
         result = pool.map(solve_multiple, tasks)
 
     return np.vstack(result)  # (M*blocksize, 1)
