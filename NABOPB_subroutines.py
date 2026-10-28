@@ -203,7 +203,10 @@ def construct_cubature(K, basis, dims, d, s, pde_dims=None):
         Total number of dimensions.
     s : int
         Target sparsity.
-    pde_dims : int
+    pde_dims : int or None, optional
+        Number of PDE coordinates (the first pde_dims dimensions).
+        Used by the PDE-specific Chebyshev sparse-recovery methods
+        to determine the oversampling factor. Defaults to None.
 
     Returns
     -------
