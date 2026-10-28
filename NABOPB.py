@@ -69,7 +69,7 @@ def NABOPB(
         Must be at least `sparsity_s`. Defaults to `sparsity_s`.
 
     delta : float, optional
-        Relative threshold for truncation at each step. Default is 1e-12.
+        Absolute threshold for coefficient detection. Default is 1e-12.
 
     niter_r : int, optional
         Number of detection iterations. Default is 5.
