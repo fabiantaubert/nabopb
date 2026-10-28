@@ -1,4 +1,5 @@
 import h5py
+from pathlib import Path
 import numpy as np
 from mpmath import zeta
 from fenics import *
@@ -216,7 +217,7 @@ def build_filename(s, N, optional=""):
 
 
 # Set folder, create file path. Note: Use 'optional' to save multiple versions with same s and N.
-folder = "results_diff_pde"
+folder = Path(__file__).resolve().parent / "results_diff_pde"
 file_path = os.path.join(folder, build_filename(s, gamma["N"], optional="OMP+"))
 
 if not os.path.exists(folder):
