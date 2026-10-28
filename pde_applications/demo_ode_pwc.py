@@ -1,3 +1,4 @@
+from pathlib import Path
 import numpy as np
 from fenics import *
 import os
@@ -104,7 +105,7 @@ def build_filename(s, N, optional=""):
 
 
 # Set folder, create file path. Note: Use 'optional' to save multiple versions with same s and N.
-folder = "results_ode_pwc"
+folder = Path(__file__).resolve().parent / "results_ode_pwc"
 file_path = os.path.join(folder, build_filename(s, gamma["N"], optional=""))
 
 if not os.path.exists(folder):
