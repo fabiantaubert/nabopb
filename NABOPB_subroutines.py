@@ -379,7 +379,7 @@ def evaluate_cubature_1d(W, Xi, f, K, basis, j, d):
             torch.from_numpy(K_half).to(prec_type).to(device).requires_grad_(False)
         )
         f_hat_temp, _, _ = SR_Lasso_Fourier(samples, values, indices)
-        f_hat_half = (f_hat_temp.detach().cpu().numpy()).squeeze()
+        f_hat_half = f_hat_temp.detach().cpu().numpy().reshape(-1)
         f_hat = expand_coefficients_up_to_sign(K, K_unique, map_idx, f_hat_half)
     elif basis in {"Fourier_OMP", "Fourier_OMP+"}:
         # Prepare indices
@@ -398,7 +398,7 @@ def evaluate_cubature_1d(W, Xi, f, K, basis, j, d):
             torch.from_numpy(K_half).to(prec_type).to(device).requires_grad_(False)
         )
         f_hat_temp, _ = OMP_Fourier(samples, values, indices, num_iters=W, tol=1e-9)
-        f_hat_half = (f_hat_temp.detach().cpu().numpy()).squeeze()
+        f_hat_half = f_hat_temp.detach().cpu().numpy().reshape(-1)
         f_hat = expand_coefficients_up_to_sign(K, K_unique, map_idx, f_hat_half)
     elif basis in ["Fourier_COSAMP", "Fourier_COSAMP+"]:
         # Prepare indices
@@ -417,7 +417,7 @@ def evaluate_cubature_1d(W, Xi, f, K, basis, j, d):
             torch.from_numpy(K_half).to(prec_type).to(device).requires_grad_(False)
         )
         f_hat_temp, _ = COSAMP_Fourier(samples, values, indices, sparsity=W, tol=1e-5)
-        f_hat_half = (f_hat_temp.detach().cpu().numpy()).squeeze()
+        f_hat_half = f_hat_temp.detach().cpu().numpy().reshape(-1)
         f_hat = expand_coefficients_up_to_sign(K, K_unique, map_idx, f_hat_half)
     elif basis in ["Cheby_SRLasso", "Cheby_SRLasso+"]:
         samples = torch.from_numpy(Xi).to(prec_type).to(device).requires_grad_(False)
@@ -430,7 +430,7 @@ def evaluate_cubature_1d(W, Xi, f, K, basis, j, d):
         )
         indices = torch.from_numpy(K).to(prec_type).to(device).requires_grad_(False)
         f_hat_temp, _, _ = SR_Lasso_Chebyshev(samples, values, indices)
-        f_hat = (f_hat_temp.detach().cpu().numpy()).squeeze()
+        f_hat = f_hat_temp.detach().cpu().numpy().reshape(-1)
     elif basis in ["Cheby_OMP", "Cheby_OMP+"]:
         samples = torch.from_numpy(Xi).to(prec_type).to(device).requires_grad_(False)
         values = (
@@ -442,7 +442,7 @@ def evaluate_cubature_1d(W, Xi, f, K, basis, j, d):
         )
         indices = torch.from_numpy(K).to(prec_type).to(device).requires_grad_(False)
         f_hat_temp, _ = OMP_Chebyshev(samples, values, indices, num_iters=W, tol=1e-9)
-        f_hat = (f_hat_temp.detach().cpu().numpy()).squeeze()
+        f_hat = f_hat_temp.detach().cpu().numpy().reshape(-1)
     elif basis in ["Cheby_COSAMP", "Cheby_COSAMP+"]:
         samples = torch.from_numpy(Xi).to(prec_type).to(device).requires_grad_(False)
         values = (
@@ -454,7 +454,7 @@ def evaluate_cubature_1d(W, Xi, f, K, basis, j, d):
         )
         indices = torch.from_numpy(K).to(prec_type).to(device).requires_grad_(False)
         f_hat_temp, _ = COSAMP_Chebyshev(samples, values, indices, sparsity=W, tol=1e-5)
-        f_hat = (f_hat_temp.detach().cpu().numpy()).squeeze()
+        f_hat = f_hat_temp.detach().cpu().numpy().reshape(-1)
     else:
         raise ValueError(f"evaluate_quadrature_1d for basis {basis} not defined")
 
@@ -545,7 +545,7 @@ def evaluate_cubature(W, Xi, f, K, basis, dims, d):
             torch.from_numpy(K_half).to(prec_type).to(device).requires_grad_(False)
         )
         f_hat_temp, vals, vals_dual = SR_Lasso_Fourier(samples, values, indices)
-        f_hat_half = (f_hat_temp.detach().cpu().numpy()).squeeze()
+        f_hat_half = f_hat_temp.detach().cpu().numpy().reshape(-1)
         f_hat = expand_coefficients_up_to_sign(K, K_unique, map_idx, f_hat_half)
     elif basis in ["Fourier_OMP", "Fourier_OMP+"]:
         # Prepare indices
@@ -564,7 +564,7 @@ def evaluate_cubature(W, Xi, f, K, basis, dims, d):
             torch.from_numpy(K_half).to(prec_type).to(device).requires_grad_(False)
         )
         f_hat_temp, _ = OMP_Fourier(samples, values, indices, num_iters=W, tol=1e-7)
-        f_hat_half = (f_hat_temp.detach().cpu().numpy()).squeeze()
+        f_hat_half = f_hat_temp.detach().cpu().numpy().reshape(-1)
         f_hat = expand_coefficients_up_to_sign(K, K_unique, map_idx, f_hat_half)
     elif basis in ["Fourier_COSAMP", "Fourier_COSAMP+"]:
         # Prepare indices
@@ -583,7 +583,7 @@ def evaluate_cubature(W, Xi, f, K, basis, dims, d):
             torch.from_numpy(K_half).to(prec_type).to(device).requires_grad_(False)
         )
         f_hat_temp, _ = COSAMP_Fourier(samples, values, indices, sparsity=W, tol=1e-5)
-        f_hat_half = (f_hat_temp.detach().cpu().numpy()).squeeze()
+        f_hat_half = f_hat_temp.detach().cpu().numpy().reshape(-1)
         f_hat = expand_coefficients_up_to_sign(K, K_unique, map_idx, f_hat_half)
     elif basis == "Cheby_rand":
         # LSQR
@@ -621,7 +621,7 @@ def evaluate_cubature(W, Xi, f, K, basis, dims, d):
         )
         indices = torch.from_numpy(K).to(prec_type).to(device).requires_grad_(False)
         f_hat_temp, vals, vals_dual = SR_Lasso_Chebyshev(samples, values, indices)
-        f_hat = (f_hat_temp.detach().cpu().numpy()).squeeze()
+        f_hat = f_hat_temp.detach().cpu().numpy().reshape(-1)
     elif basis in ["Cheby_OMP", "Cheby_OMP+"]:
         samples = torch.from_numpy(Xi).to(prec_type).to(device).requires_grad_(False)
         values = (
@@ -633,7 +633,7 @@ def evaluate_cubature(W, Xi, f, K, basis, dims, d):
         )
         indices = torch.from_numpy(K).to(prec_type).to(device).requires_grad_(False)
         f_hat_temp, _ = OMP_Chebyshev(samples, values, indices, num_iters=W, tol=1e-7)
-        f_hat = (f_hat_temp.detach().cpu().numpy()).squeeze()
+        f_hat = f_hat_temp.detach().cpu().numpy().reshape(-1)
     elif basis in ["Cheby_COSAMP", "Cheby_COSAMP+"]:
         samples = torch.from_numpy(Xi).to(prec_type).to(device).requires_grad_(False)
         values = (
@@ -645,7 +645,7 @@ def evaluate_cubature(W, Xi, f, K, basis, dims, d):
         )
         indices = torch.from_numpy(K).to(prec_type).to(device).requires_grad_(False)
         f_hat_temp, _ = COSAMP_Chebyshev(samples, values, indices, sparsity=W, tol=1e-5)
-        f_hat = (f_hat_temp.detach().cpu().numpy()).squeeze()
+        f_hat = f_hat_temp.detach().cpu().numpy().reshape(-1)
     else:
         raise ValueError(f"evaluate_quadrature for basis {basis} not defined")
 
