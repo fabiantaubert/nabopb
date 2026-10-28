@@ -1,6 +1,7 @@
 from pathlib import Path
 import numpy as np
 import pickle
+import matplotlib.pyplot as plt
 from fenics import *
 from multiprocessing import Pool
 
@@ -73,39 +74,26 @@ def eval_cheby(x, val, index):
 
 
 def single_error(args):
-    i, a, results_1000, results_2000, results_4000 = args
+    i, a, results = args
 
-    # Compute the reference solution once for all three approximations.
+    # Solve the PDE for the reference values at the FEM mesh vertices.
     points, ex_sol = solve_pde(a[i, :])
+
+    # Evaluate the selected approximation at the same points.
     a_temp = np.broadcast_to(a[i, :], (points.shape[0], a.shape[1]))
-    eval_points = np.hstack([points * 2 - 1, a_temp])
-
-    approx_1000 = eval_cheby(
-        eval_points, results_1000["val"], results_1000["index"]
-    )
-    approx_2000 = eval_cheby(
-        eval_points, results_2000["val"], results_2000["index"]
-    )
-    approx_4000 = eval_cheby(
-        eval_points, results_4000["val"], results_4000["index"]
+    approx_sol = eval_cheby(
+        np.hstack([points * 2 - 1, a_temp]),
+        results["val"],
+        results["index"],
     )
 
-    norm_ex = np.linalg.norm(ex_sol, 2)
-
-    return (
-        np.linalg.norm(ex_sol - approx_1000, 2) / norm_ex,
-        np.linalg.norm(ex_sol - approx_2000, 2) / norm_ex,
-        np.linalg.norm(ex_sol - approx_4000, 2) / norm_ex,
-    )
+    return np.linalg.norm(ex_sol - approx_sol, 2) / np.linalg.norm(ex_sol, 2)
 
 
-def parallel_error(N, results_1000, results_2000, results_4000):
+def parallel_error(N, results):
     rng = np.random.default_rng(12345)
     a = rng.uniform(-1, 1, size=(N, 9))
-    args = [
-        (i, a, results_1000, results_2000, results_4000)
-        for i in range(N)
-    ]
+    args = [(i, a, results) for i in range(N)]
 
     with Pool() as pool:
         err = pool.map(single_error, args)
@@ -113,36 +101,36 @@ def parallel_error(N, results_1000, results_2000, results_4000):
     return np.asarray(err)
 
 
-# Load the three approximations from the dissertation.
-results_dir = Path(__file__).resolve().parent / "results_pois_2d"
-with open(results_dir / "s1000n64.pickle", "rb") as file:
-    results_1000 = pickle.load(file)
+# Load one selected approximation; change the filename to test another setting.
+file_path = Path(__file__).resolve().parent / "results_pois_2d" / "s1000n64.pickle"
+with open(file_path, "rb") as file:
+    results = pickle.load(file)
 
-with open(results_dir / "s2000n128.pickle", "rb") as file:
-    results_2000 = pickle.load(file)
+# Evaluate the approximation on 10,000 parameter vectors.
+err = parallel_error(10**4, results)
 
-with open(results_dir / "s4000n256.pickle", "rb") as file:
-    results_4000 = pickle.load(file)
-
-# Evaluate all approximations on the same 10,000 parameter vectors.
-err = parallel_error(10**4, results_1000, results_2000, results_4000)
-
-# Rows correspond to (1000, 64), (2000, 128), and (4000, 256).
-# Columns: minimum, first quartile, median, third quartile, maximum.
-boxstats = np.column_stack(
-    [
-        np.min(err, axis=0),
-        np.percentile(err, 25, axis=0),
-        np.median(err, axis=0),
-        np.percentile(err, 75, axis=0),
-        np.max(err, axis=0),
-    ]
+# Display the error distribution without writing an output file.
+plt.figure(figsize=(8, 2.5))
+plt.boxplot(
+    err,
+    vert=False,
+    widths=0.5,
+    patch_artist=True,
+    boxprops=dict(facecolor="lightblue", color="blue"),
+    medianprops=dict(color="darkblue"),
+    whiskerprops=dict(color="blue"),
+    capprops=dict(color="blue"),
+    flierprops=dict(
+        markerfacecolor="blue",
+        marker="o",
+        markersize=3,
+        linestyle="none",
+        markeredgecolor="none",
+    ),
 )
-
-np.savetxt(
-    results_dir / "pois2d_errors_t.csv",
-    boxstats,
-    delimiter=",",
-    header="lw,lq,med,uq,uw",
-    comments="",
-)
+plt.xscale("log")
+plt.xlabel(r"Relative $L^2$ error (log scale)", fontsize=12)
+plt.title("Boxplot of relative $L^2$ errors for the 2D Poisson equation", fontsize=13)
+plt.grid(True, axis="x", linestyle="--", alpha=0.6)
+plt.tight_layout()
+plt.show()
