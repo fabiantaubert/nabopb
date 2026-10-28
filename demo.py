@@ -122,7 +122,6 @@ d = 4
 s = 100
 
 basis_flag1 = "Cheby_mr1l"
-basis_flag2 = "Cheby_mr1l_subsampling"
 
 gamma = {"type": "full", "N": 16, "sgn": "non-negative"}
 
@@ -151,7 +150,6 @@ def f_cheby_test(x, freq, coef):
 
 # Compute approximations
 C_mr1l_result = NABOPB(lambda x: f_cheby_test(x, freq, coef), d, basis_flag1, gamma, diminc, s)
-C_ssmr1l_result = NABOPB(lambda x: f_cheby_test(x, freq, coef), d, basis_flag2, gamma, diminc, s)
 
 # Show results
 if "C_mr1l_result" in locals():
@@ -166,21 +164,6 @@ if "C_mr1l_result" in locals():
     else:
         print(f'Detection failed, samples: {np.sum(C_mr1l_result["sample_sizes"])}')
     print(f'Time: {C_mr1l_result["run_times"][3]}')
-
-if "C_ssmr1l_result" in locals():
-    print("====Cheby_mr1l_subsampling====")
-    matched_coef = coefficients_in_reference_order(C_ssmr1l_result, freq)
-    if matched_coef is not None:
-        err1_l2 = np.linalg.norm(coef - matched_coef)
-        err1_inf = np.max(np.abs(coef - matched_coef))
-        print(
-            f'Detection successful, samples: {np.sum(C_ssmr1l_result["sample_sizes"])}'
-        )
-        print(f"l_2-error: {err1_l2:e}")
-        print(f"max-error: {err1_inf:e}")
-    else:
-        print(f'Detection failed, samples: {np.sum(C_ssmr1l_result["sample_sizes"])}')
-    print(f'Time: {C_ssmr1l_result["run_times"][3]}')
 
 print("\n")
 
