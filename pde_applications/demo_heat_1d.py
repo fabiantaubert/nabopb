@@ -59,6 +59,13 @@ def solve_heat_at_multiple(var1, a_coeffs, alpha=0.25, nx=1000, rtol=1e-8, atol=
     x_query = var1[:, 0]
     t_query = var1[:, 1]
 
+    # At t = 0, the solution equals the initial condition; no integration is needed.
+    if np.all(t_query == 0):
+        u_out = np.zeros(len(x_query))
+        for l, a_l in enumerate(a_coeffs, start=1):
+            u_out += a_l * np.sin(l * np.pi * x_query)
+        return u_out.reshape(-1, 1)
+
     # Build spatial grid
     x_vals = np.linspace(0, 1, nx)
     dx = x_vals[1] - x_vals[0]
