@@ -310,7 +310,7 @@ def OMP2(col_extractor, A, AT, normalization, b, f, p, num_iters=1500, tol=1e-7)
     diag = torch.clamp(normalization.flatten(), min=eps)
     z_2 = torch.empty_like(diag)
     res = b
-    num_iters = min(num_iters, x.numel() - 1)
+    num_iters = min(num_iters, x.numel())
     num_iters = math.floor(min(num_iters, b.size(0)))
 
     for j in range(num_iters):
