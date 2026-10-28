@@ -84,13 +84,13 @@ def solve_pois2d(var):
 
 # Set parameters
 d = 11  # Total dimensions: 2 spatial dimensions + 9 parameter dimensions
-s = 100  # sparsity
+s = 1000  # sparsity
 
-basis_flag = "Cheby_SRLasso"  # Specifies approximation basis and cubature method
+basis_flag = "Cheby_mr1l"  # Specifies approximation basis and cubature method
 
 gamma = {  # Define the search space Gamma
     "type": "full",
-    "N": 16,
+    "N": 64,
     "W": 1,
     "sgn": "non-negative",
 }
