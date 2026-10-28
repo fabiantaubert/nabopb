@@ -360,8 +360,8 @@ def evaluate_cubature_1d(W, Xi, f, K, basis, j, d):
         f_hat_temp = (scal * np.sqrt(2) / np.sqrt(W)) * dct(
             scal * f, type=1, norm="ortho"
         )
-        idx = np.arange(0, np.max(K) + 1)
-        f_hat = f_hat_temp[np.isin(idx, K)]
+        f_hat_temp[1:] /= np.sqrt(2)
+        f_hat = f_hat_temp[K[:, 0]]
     elif basis in ["Fourier_SRLasso", "Fourier_SRLasso+"]:
         # Prepare indices
         K_unique, map_idx = unique_up_to_sign(K)
