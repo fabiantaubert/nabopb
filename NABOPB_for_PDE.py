@@ -134,6 +134,8 @@ def NABOPB_for_PDE(
 
     # Parameter checks
     check_naturalnumber_or_error(d, "dimensionality d")
+    if d < 2:
+        raise ValueError("NABOPB requires d >= 2.")
     check_naturalnumber_or_error(sparsity_s, "parameter s")
     check_naturalnumber_or_error(sparsity_s_local, "parameter s_local")
     if sparsity_s > sparsity_s_local:
