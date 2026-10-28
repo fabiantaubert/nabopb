@@ -344,10 +344,8 @@ def evaluate_cubature_1d(W, Xi, f, K, basis, j, d):
         f_hat, _, _, _ = lstsq(np.conjugate(phi.T), f)
     elif basis in ["Fourier_r1l", "Fourier_ssr1l", "Fourier_mr1l"]:
         # FFT
-        # f_hat_temp = np.fft.fftshift(np.fft.fft(f / W, W))
-        f_hat_temp = np.roll(np.fft.fft(f / W, W), int(np.max(K)))
-        idx = np.arange(np.min(K), np.max(K) + 1)
-        f_hat = f_hat_temp[np.isin(idx, K)]
+        f_hat_temp = np.fft.fft(f / W, W)
+        f_hat = f_hat_temp[np.mod(K[:, 0], W)]
     elif basis == "Cheby_rand":
         # LSQR, check if phi.T is correct
         phi = np.conjugate(np.cos(K @ np.arccos(np.conjugate(Xi.T)))) * (
