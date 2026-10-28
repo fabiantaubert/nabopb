@@ -335,7 +335,7 @@ def detect_1D(j, fct_handle, d, gamma, basis_flag, sparsity_s_local, delta, nite
             weight = gamma["w"]
         else:
             weight = gamma["w"][j[0] - 1]
-        max_val = 2 ** gamma["N"] * weight
+        max_val = int(2 ** gamma["N"] * weight)
         if gamma["sgn"] == "default":
             K = np.arange(-max_val, max_val + 1).reshape(-1, 1)
         elif gamma["sgn"] == "non-negative":
