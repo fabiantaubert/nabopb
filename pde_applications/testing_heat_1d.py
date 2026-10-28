@@ -1,3 +1,4 @@
+from pathlib import Path
 import numpy as np
 import pickle
 import matplotlib.pyplot as plt
@@ -85,7 +86,7 @@ with open(file_path, "rb") as file:
     results = pickle.load(file)
 
 # Run error computation
-a_test = np.load("heat_testset_10000.npy")
+a_test = np.load(Path(__file__).resolve().parent / "heat_testset_10000.npy")
 err = parallel_error(a_test, results)
 # err = parallel_error_random(10 ** 4, results)
 
