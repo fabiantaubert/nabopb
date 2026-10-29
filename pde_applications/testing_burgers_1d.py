@@ -1,3 +1,4 @@
+from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
@@ -12,7 +13,7 @@ parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 
 
-def solve_burgers(a_coeffs, nu=0.05, alpha=2.0, nx=100):
+def solve_burgers(a_coeffs, nu=0.05, alpha=2.0, nx=1000, n_eval=100):
     x_vals = np.linspace(0, 1, nx)
     dx = x_vals[1] - x_vals[0]
 
@@ -39,7 +40,9 @@ def solve_burgers(a_coeffs, nu=0.05, alpha=2.0, nx=100):
         burgers_rhs, [0, 1.0], u0, t_eval=[1.0], method="Radau", rtol=1e-6, atol=1e-8
     )
 
-    return x_vals, sol.y[:, 0]
+    # Solve on 1000 spatial grid points, but evaluate errors at 100 points.
+    x_eval = np.linspace(0, 1, n_eval)
+    return x_eval, np.interp(x_eval, x_vals, sol.y[:, 0])
 
 
 # Exact solution at t = 1
@@ -81,7 +84,7 @@ def single_error(args):
     i, a, results = args
 
     # Solve PDE to get reference solution
-    x_vals, u_true_grid = solve_burgers(a[i], nx=100)
+    x_vals, u_true_grid = solve_burgers(a[i], nx=1000, n_eval=100)
     points = np.array([[x] for x in x_vals])
     ex_sol = u_true_grid.flatten()
 
@@ -125,12 +128,12 @@ def parallel_error(a, results):
 
 
 # Load approximation results
-file_path = "results_burgers_1d/s1000n64OMP+.pickle"
+file_path = Path(__file__).resolve().parent / "results_burgers_1d" / "s1000n64OMP+.pickle"
 with open(file_path, "rb") as file:
     results = pickle.load(file)
 
 # Run error computation
-a_test = np.load("heat_testset_10000.npy")
+a_test = np.load(Path(__file__).resolve().parent / "heat_testset_10000.npy")
 err = parallel_error(a_test, results)
 # err = parallel_error_random(10 ** 4, results)
 

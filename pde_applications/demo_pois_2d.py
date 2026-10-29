@@ -1,3 +1,4 @@
+from pathlib import Path
 import numpy as np
 from fenics import *
 from multiprocessing import Pool
@@ -83,13 +84,13 @@ def solve_pois2d(var):
 
 # Set parameters
 d = 11  # Total dimensions: 2 spatial dimensions + 9 parameter dimensions
-s = 100  # sparsity
+s = 1000  # sparsity
 
-basis_flag = "Cheby_SRLasso"  # Specifies approximation basis and cubature method
+basis_flag = "Cheby_mr1l"  # Specifies approximation basis and cubature method
 
 gamma = {  # Define the search space Gamma
     "type": "full",
-    "N": 16,
+    "N": 64,
     "W": 1,
     "sgn": "non-negative",
 }
@@ -108,7 +109,7 @@ def build_filename(s, N, optional=""):
 
 
 # Set folder, create file path. Note: Use 'optional' to save multiple versions with same s and N.
-folder = "results_pois_2d"
+folder = Path(__file__).resolve().parent / "results_pois_2d"
 file_path = os.path.join(folder, build_filename(s, gamma["N"], optional=""))
 
 if not os.path.exists(folder):

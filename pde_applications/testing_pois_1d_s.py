@@ -1,3 +1,4 @@
+from pathlib import Path
 import numpy as np
 from scipy.integrate import solve_bvp
 import matplotlib.pyplot as plt
@@ -57,7 +58,7 @@ def solve_pois1d(x, a):
     sol = solve_bvp(lambda t, y: bvpfcn(t, y, a, m), bcfcn, xmesh, y_guess, tol=1e-9)
 
     # Return solution at x
-    return np.interp(x, sol.x, sol.y[0])
+    return sol.sol(x)[0]
 
 
 def eval_cheby(x, val, index):
@@ -108,12 +109,12 @@ def parallel_error(N, results):
 
 
 # Load approximation results
-file_path = "results_pois_1d_s/s100n16.pickle"
+file_path = Path(__file__).resolve().parent / "results_pois_1d_s" / "s1000n64OMP.pickle"
 with open(file_path, "rb") as file:
     results = pickle.load(file)
 
 # Run error computation
-err = parallel_error(10**2, results)
+err = parallel_error(10**4, results)
 
 # Plot the error
 plt.figure(figsize=(8, 2.5))

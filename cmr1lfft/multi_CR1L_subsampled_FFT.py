@@ -61,7 +61,10 @@ def multi_CR1L_subsampled_FFT(phat, I, multi_lattice, tflag='notransp', wflag='u
             phat = np.sqrt(multi_lattice['subsampling_data']['ws']) * phat
 
         # pigeon-hole sampling values
-        p = np.zeros(np.sum((multi_lattice['Ms'] - 1) // 2) + 1)
+        p = np.zeros(
+            np.sum((multi_lattice['Ms'] - 1) // 2) + 1,
+            dtype=np.result_type(phat, np.float64),
+        )
         p[multi_lattice['subsampling_data']['js']] = phat
         
         # apply transposed FFT

@@ -19,6 +19,21 @@ else:
     prec_type = torch.double
 
 
+def real_samples_for_sparse_recovery(f):
+    """Return real-valued samples, allowing negligible imaginary roundoff."""
+    if np.iscomplexobj(f):
+        imag_max = np.max(np.abs(f.imag))
+        scale = np.max(np.abs(f))
+
+        if imag_max > 1e-14 + 1e-12 * scale:
+            raise ValueError(
+                "Sparse recovery requires real-valued function samples."
+            )
+
+        f = f.real
+
+    return f
+
 def random_number(d, dims, basis, number_points=1):
     """
     Draw a random anchor `x_tilde` in the remaining dimensions according to the specified basis.
@@ -32,11 +47,13 @@ def random_number(d, dims, basis, number_points=1):
     basis : string
         Specifies the basis for generating the random anchor. See NABOPB.py
         for details on the currently supported cases.
+    number_points : int, optional
+        Number of random anchor points to generate. Default is 1.
 
     Returns
     -------
     x_tilde : ndarray
-        The generated random anchor, an array of shape `(1, d - len(dims))`.
+        Random anchor points of shape (number_points, d - len(dims)).
 
     Raises
     ------
@@ -63,7 +80,6 @@ def random_number(d, dims, basis, number_points=1):
     elif basis in {
         "Cheby_rand",
         "Cheby_mr1l",
-        "Cheby_mr1l_2024",
         "Cheby_mr1l_subsampling",
         "Cheby_SRLasso",
         "Cheby_SRLasso+",
@@ -85,14 +101,16 @@ def random_number(d, dims, basis, number_points=1):
 
 def construct_cubature_1d(K, basis, j, d, s):
     """
-    Construct cubature nodes `Xi` and weights `W` for a given one-dimensional candidate set `K`.
+    Construct sampling nodes `Xi` and reconstruction parameters `W`
+    for a given one-dimensional candidate set `K`.
 
     Parameters
     ----------
     K : array_like
         One-dimensional candidate set, typically represented as an array of indices.
     basis : string
-        Specifies the basis for generating the cubature nodes and weights.
+        Specifies the basis and reconstruction method for generating sampling nodes
+        and reconstruction parameters.
         See NABOPB.py for details on the currently supported cases.
     j : int
         Index corresponding to the dimension in consideration.
@@ -103,10 +121,10 @@ def construct_cubature_1d(K, basis, j, d, s):
 
     Returns
     -------
-    W : xxx
-        Cubature weights (or whatever information is needed).
+    W : int, tuple, or dict
+        Reconstruction parameters required by the chosen method.
     Xi : ndarray
-        Cubature nodes.
+        One-dimensional sampling nodes.
 
     Raises
     ------
@@ -120,7 +138,7 @@ def construct_cubature_1d(K, basis, j, d, s):
     if basis == "Fourier_rand":
         # Monte Carlo, W is number of nodes
         n = K.shape[0]
-        W = int(np.ceil(n * np.log(n)))
+        W = max(1, int(np.ceil(n * np.log(n))))
         Xi = np.sort(np.random.rand(W))
 
     elif basis in {"Fourier_r1l", "Fourier_ssr1l", "Fourier_mr1l"}:
@@ -137,17 +155,17 @@ def construct_cubature_1d(K, basis, j, d, s):
         "Fourier_COSAMP+",
     }:
         W = s
-        Xi = np.random.rand(5 * W)
+        Xi = np.random.rand(7 * W)
 
     elif basis == "Cheby_rand":
         # Monte Carlo, W is number of nodes
         n = np.sum(2 ** (np.sum(K != 0, axis=1)))
-        W = int(np.ceil(n * np.log(n)))
+        W = max(1, int(np.ceil(n * np.log(n))))
         Xi = np.sort(np.sin(np.pi * (np.random.rand(W) - 0.5)))
 
     elif basis in {"Cheby_mr1l", "Cheby_mr1l_subsampling"}:
         # DCT-I of length W+1
-        W = np.max(K)
+        W = max(1, int(np.max(K)))
         Xi = np.cos(np.pi * np.linspace(0, 1, W + 1))
 
     elif basis in {
@@ -159,7 +177,7 @@ def construct_cubature_1d(K, basis, j, d, s):
         "Cheby_COSAMP+",
     }:
         W = s
-        Xi = np.sin(np.pi * (np.random.rand(1 * W) - 0.5))
+        Xi = np.sin(np.pi * (np.random.rand(3 * W) - 0.5))
 
     else:
         raise ValueError(f"construct_cubature_1d for basis {basis} not defined")
@@ -172,14 +190,16 @@ def construct_cubature_1d(K, basis, j, d, s):
 
 def construct_cubature(K, basis, dims, d, s, pde_dims=None):
     """
-    Construct the cubature nodes `Xi` and weights `W` for a given n-dimensional candidate set `K`.
+    Construct sampling nodes `Xi` and reconstruction parameters `W`
+    for a given n-dimensional candidate set `K`.
 
     Parameters
     ----------
     K : array_like
         n-dimensional candidate set, typically represented as an array of indices.
     basis : string
-        Specifies the basis for generating the cubature nodes and weights.
+        Specifies the basis and reconstruction method for generating sampling nodes
+        and reconstruction parameters.
         See `NABOPB.py` for details on the currently supported cases.
     dims : array_like
         List of fixed dimensions from the set {1, ..., d}.
@@ -187,7 +207,10 @@ def construct_cubature(K, basis, dims, d, s, pde_dims=None):
         Total number of dimensions.
     s : int
         Target sparsity.
-    pde_dims : int
+    pde_dims : int or None, optional
+        Number of PDE coordinates (the first pde_dims dimensions).
+        Used by the PDE-specific Chebyshev sparse-recovery methods
+        to determine the oversampling factor. Defaults to None.
 
     Returns
     -------
@@ -207,7 +230,7 @@ def construct_cubature(K, basis, dims, d, s, pde_dims=None):
     if basis == "Fourier_rand":
         # Monte Carlo, W is number of nodes
         n = K.shape[0]
-        W = int(np.ceil(n * np.log(n)))
+        W = max(1, int(np.ceil(n * np.log(n))))
         t = K.shape[1]
         Xi = np.random.rand(W, t)
     elif basis == "Fourier_r1l":
@@ -221,7 +244,7 @@ def construct_cubature(K, basis, dims, d, s, pde_dims=None):
         Xi_full = np.mod(np.arange(M).reshape(-1, 1) * z, M) / M
         # Draw n (log n) random indices
         n = K.shape[0]
-        N = int(np.ceil(n * np.log(n)))
+        N = max(1, int(np.ceil(n * np.log(n))))
         idcs_s = np.random.randint(0, M, N)
         # Reduce nodes
         Xi = Xi_full[np.unique(idcs_s), :]
@@ -251,7 +274,7 @@ def construct_cubature(K, basis, dims, d, s, pde_dims=None):
     elif basis == "Cheby_rand":
         # Monte Carlo, W is number of nodes
         n = np.sum(2 ** (np.sum(K != 0, axis=1)))
-        W = int(np.ceil(n * np.log(n)))
+        W = max(1, int(np.ceil(n * np.log(n))))
         t = K.shape[1]
         Xi = np.sin(np.pi * (np.random.rand(W, t) - 0.5))
     elif basis == "Cheby_mr1l":
@@ -336,6 +359,7 @@ def evaluate_cubature_1d(W, Xi, f, K, basis, j, d):
         If the specified `basis` is not recognized or unsupported.
     """
 
+    f = np.asarray(f).reshape(-1)
     f_hat = np.zeros((K.shape[0], 1))
 
     if basis == "Fourier_rand":
@@ -344,10 +368,8 @@ def evaluate_cubature_1d(W, Xi, f, K, basis, j, d):
         f_hat, _, _, _ = lstsq(np.conjugate(phi.T), f)
     elif basis in ["Fourier_r1l", "Fourier_ssr1l", "Fourier_mr1l"]:
         # FFT
-        # f_hat_temp = np.fft.fftshift(np.fft.fft(f / W, W))
-        f_hat_temp = np.roll(np.fft.fft(f / W, W), int(np.max(K)))
-        idx = np.arange(np.min(K), np.max(K) + 1)
-        f_hat = f_hat_temp[np.isin(idx, K)]
+        f_hat_temp = np.fft.fft(f / W, W)
+        f_hat = f_hat_temp[np.mod(K[:, 0], W)]
     elif basis == "Cheby_rand":
         # LSQR, check if phi.T is correct
         phi = np.conjugate(np.cos(K @ np.arccos(np.conjugate(Xi.T)))) * (
@@ -362,8 +384,8 @@ def evaluate_cubature_1d(W, Xi, f, K, basis, j, d):
         f_hat_temp = (scal * np.sqrt(2) / np.sqrt(W)) * dct(
             scal * f, type=1, norm="ortho"
         )
-        idx = np.arange(0, np.max(K) + 1)
-        f_hat = f_hat_temp[np.isin(idx, K)]
+        f_hat_temp[1:] /= np.sqrt(2)
+        f_hat = f_hat_temp[K[:, 0]]
     elif basis in ["Fourier_SRLasso", "Fourier_SRLasso+"]:
         # Prepare indices
         K_unique, map_idx = unique_up_to_sign(K)
@@ -371,7 +393,7 @@ def evaluate_cubature_1d(W, Xi, f, K, basis, j, d):
         # Start LASSO
         samples = torch.from_numpy(Xi).to(prec_type).to(device).requires_grad_(False)
         values = (
-            torch.from_numpy(f)
+            torch.from_numpy(real_samples_for_sparse_recovery(f))
             .to(prec_type)
             .view(-1, 1)
             .to(device)
@@ -381,7 +403,7 @@ def evaluate_cubature_1d(W, Xi, f, K, basis, j, d):
             torch.from_numpy(K_half).to(prec_type).to(device).requires_grad_(False)
         )
         f_hat_temp, _, _ = SR_Lasso_Fourier(samples, values, indices)
-        f_hat_half = (f_hat_temp.detach().cpu().numpy()).squeeze()
+        f_hat_half = f_hat_temp.detach().cpu().numpy().reshape(-1)
         f_hat = expand_coefficients_up_to_sign(K, K_unique, map_idx, f_hat_half)
     elif basis in {"Fourier_OMP", "Fourier_OMP+"}:
         # Prepare indices
@@ -390,7 +412,7 @@ def evaluate_cubature_1d(W, Xi, f, K, basis, j, d):
         # Start OMP
         samples = torch.from_numpy(Xi).to(prec_type).to(device).requires_grad_(False)
         values = (
-            torch.from_numpy(f)
+            torch.from_numpy(real_samples_for_sparse_recovery(f))
             .to(prec_type)
             .view(-1, 1)
             .to(device)
@@ -400,7 +422,7 @@ def evaluate_cubature_1d(W, Xi, f, K, basis, j, d):
             torch.from_numpy(K_half).to(prec_type).to(device).requires_grad_(False)
         )
         f_hat_temp, _ = OMP_Fourier(samples, values, indices, num_iters=W, tol=1e-9)
-        f_hat_half = (f_hat_temp.detach().cpu().numpy()).squeeze()
+        f_hat_half = f_hat_temp.detach().cpu().numpy().reshape(-1)
         f_hat = expand_coefficients_up_to_sign(K, K_unique, map_idx, f_hat_half)
     elif basis in ["Fourier_COSAMP", "Fourier_COSAMP+"]:
         # Prepare indices
@@ -409,7 +431,7 @@ def evaluate_cubature_1d(W, Xi, f, K, basis, j, d):
         # Start COSAMP
         samples = torch.from_numpy(Xi).to(prec_type).to(device).requires_grad_(False)
         values = (
-            torch.from_numpy(f)
+            torch.from_numpy(real_samples_for_sparse_recovery(f))
             .to(prec_type)
             .view(-1, 1)
             .to(device)
@@ -419,12 +441,12 @@ def evaluate_cubature_1d(W, Xi, f, K, basis, j, d):
             torch.from_numpy(K_half).to(prec_type).to(device).requires_grad_(False)
         )
         f_hat_temp, _ = COSAMP_Fourier(samples, values, indices, sparsity=W, tol=1e-5)
-        f_hat_half = (f_hat_temp.detach().cpu().numpy()).squeeze()
+        f_hat_half = f_hat_temp.detach().cpu().numpy().reshape(-1)
         f_hat = expand_coefficients_up_to_sign(K, K_unique, map_idx, f_hat_half)
     elif basis in ["Cheby_SRLasso", "Cheby_SRLasso+"]:
         samples = torch.from_numpy(Xi).to(prec_type).to(device).requires_grad_(False)
         values = (
-            torch.from_numpy(f)
+            torch.from_numpy(real_samples_for_sparse_recovery(f))
             .to(prec_type)
             .view(-1, 1)
             .to(device)
@@ -432,11 +454,11 @@ def evaluate_cubature_1d(W, Xi, f, K, basis, j, d):
         )
         indices = torch.from_numpy(K).to(prec_type).to(device).requires_grad_(False)
         f_hat_temp, _, _ = SR_Lasso_Chebyshev(samples, values, indices)
-        f_hat = (f_hat_temp.detach().cpu().numpy()).squeeze()
+        f_hat = f_hat_temp.detach().cpu().numpy().reshape(-1)
     elif basis in ["Cheby_OMP", "Cheby_OMP+"]:
         samples = torch.from_numpy(Xi).to(prec_type).to(device).requires_grad_(False)
         values = (
-            torch.from_numpy(f)
+            torch.from_numpy(real_samples_for_sparse_recovery(f))
             .to(prec_type)
             .view(-1, 1)
             .to(device)
@@ -444,11 +466,11 @@ def evaluate_cubature_1d(W, Xi, f, K, basis, j, d):
         )
         indices = torch.from_numpy(K).to(prec_type).to(device).requires_grad_(False)
         f_hat_temp, _ = OMP_Chebyshev(samples, values, indices, num_iters=W, tol=1e-9)
-        f_hat = (f_hat_temp.detach().cpu().numpy()).squeeze()
+        f_hat = f_hat_temp.detach().cpu().numpy().reshape(-1)
     elif basis in ["Cheby_COSAMP", "Cheby_COSAMP+"]:
         samples = torch.from_numpy(Xi).to(prec_type).to(device).requires_grad_(False)
         values = (
-            torch.from_numpy(f)
+            torch.from_numpy(real_samples_for_sparse_recovery(f))
             .to(prec_type)
             .view(-1, 1)
             .to(device)
@@ -456,9 +478,9 @@ def evaluate_cubature_1d(W, Xi, f, K, basis, j, d):
         )
         indices = torch.from_numpy(K).to(prec_type).to(device).requires_grad_(False)
         f_hat_temp, _ = COSAMP_Chebyshev(samples, values, indices, sparsity=W, tol=1e-5)
-        f_hat = (f_hat_temp.detach().cpu().numpy()).squeeze()
+        f_hat = f_hat_temp.detach().cpu().numpy().reshape(-1)
     else:
-        raise ValueError(f"evaluate_quadrature_1d for basis {basis} not defined")
+        raise ValueError(f"evaluate_cubature_1d for basis {basis} not defined")
 
     return f_hat
 
@@ -500,6 +522,7 @@ def evaluate_cubature(W, Xi, f, K, basis, dims, d):
         If the specified `basis` is not recognized or unsupported.
     """
 
+    f = np.asarray(f).reshape(-1)
     f_hat = np.zeros(K.shape[0])
     if basis == "Fourier_rand":
         # LSQR
@@ -537,7 +560,7 @@ def evaluate_cubature(W, Xi, f, K, basis, dims, d):
         # Start LASSO
         samples = torch.from_numpy(Xi).to(prec_type).to(device).requires_grad_(False)
         values = (
-            torch.from_numpy(f)
+            torch.from_numpy(real_samples_for_sparse_recovery(f))
             .to(prec_type)
             .view(-1, 1)
             .to(device)
@@ -547,7 +570,7 @@ def evaluate_cubature(W, Xi, f, K, basis, dims, d):
             torch.from_numpy(K_half).to(prec_type).to(device).requires_grad_(False)
         )
         f_hat_temp, vals, vals_dual = SR_Lasso_Fourier(samples, values, indices)
-        f_hat_half = (f_hat_temp.detach().cpu().numpy()).squeeze()
+        f_hat_half = f_hat_temp.detach().cpu().numpy().reshape(-1)
         f_hat = expand_coefficients_up_to_sign(K, K_unique, map_idx, f_hat_half)
     elif basis in ["Fourier_OMP", "Fourier_OMP+"]:
         # Prepare indices
@@ -556,7 +579,7 @@ def evaluate_cubature(W, Xi, f, K, basis, dims, d):
         # Start OMP
         samples = torch.from_numpy(Xi).to(prec_type).to(device).requires_grad_(False)
         values = (
-            torch.from_numpy(f)
+            torch.from_numpy(real_samples_for_sparse_recovery(f))
             .to(prec_type)
             .view(-1, 1)
             .to(device)
@@ -566,7 +589,7 @@ def evaluate_cubature(W, Xi, f, K, basis, dims, d):
             torch.from_numpy(K_half).to(prec_type).to(device).requires_grad_(False)
         )
         f_hat_temp, _ = OMP_Fourier(samples, values, indices, num_iters=W, tol=1e-7)
-        f_hat_half = (f_hat_temp.detach().cpu().numpy()).squeeze()
+        f_hat_half = f_hat_temp.detach().cpu().numpy().reshape(-1)
         f_hat = expand_coefficients_up_to_sign(K, K_unique, map_idx, f_hat_half)
     elif basis in ["Fourier_COSAMP", "Fourier_COSAMP+"]:
         # Prepare indices
@@ -575,7 +598,7 @@ def evaluate_cubature(W, Xi, f, K, basis, dims, d):
         # Start COSAMP
         samples = torch.from_numpy(Xi).to(prec_type).to(device).requires_grad_(False)
         values = (
-            torch.from_numpy(f)
+            torch.from_numpy(real_samples_for_sparse_recovery(f))
             .to(prec_type)
             .view(-1, 1)
             .to(device)
@@ -585,7 +608,7 @@ def evaluate_cubature(W, Xi, f, K, basis, dims, d):
             torch.from_numpy(K_half).to(prec_type).to(device).requires_grad_(False)
         )
         f_hat_temp, _ = COSAMP_Fourier(samples, values, indices, sparsity=W, tol=1e-5)
-        f_hat_half = (f_hat_temp.detach().cpu().numpy()).squeeze()
+        f_hat_half = f_hat_temp.detach().cpu().numpy().reshape(-1)
         f_hat = expand_coefficients_up_to_sign(K, K_unique, map_idx, f_hat_half)
     elif basis == "Cheby_rand":
         # LSQR
@@ -611,11 +634,12 @@ def evaluate_cubature(W, Xi, f, K, basis, dims, d):
             matvec=lambda x: Ax_cmr1lss(x, K, W),
             rmatvec=lambda b: Atb_cmr1lss(b, K, W),
         )
-        f_hat = lsqr(A, f)[0]
+        f_weighted = np.sqrt(W["subsampling_data"]["ws"]) * f
+        f_hat = lsqr(A, f_weighted)[0]
     elif basis in ["Cheby_SRLasso", "Cheby_SRLasso+"]:
         samples = torch.from_numpy(Xi).to(prec_type).to(device).requires_grad_(False)
         values = (
-            torch.from_numpy(f)
+            torch.from_numpy(real_samples_for_sparse_recovery(f))
             .to(prec_type)
             .view(-1, 1)
             .to(device)
@@ -623,11 +647,11 @@ def evaluate_cubature(W, Xi, f, K, basis, dims, d):
         )
         indices = torch.from_numpy(K).to(prec_type).to(device).requires_grad_(False)
         f_hat_temp, vals, vals_dual = SR_Lasso_Chebyshev(samples, values, indices)
-        f_hat = (f_hat_temp.detach().cpu().numpy()).squeeze()
+        f_hat = f_hat_temp.detach().cpu().numpy().reshape(-1)
     elif basis in ["Cheby_OMP", "Cheby_OMP+"]:
         samples = torch.from_numpy(Xi).to(prec_type).to(device).requires_grad_(False)
         values = (
-            torch.from_numpy(f)
+            torch.from_numpy(real_samples_for_sparse_recovery(f))
             .to(prec_type)
             .view(-1, 1)
             .to(device)
@@ -635,11 +659,11 @@ def evaluate_cubature(W, Xi, f, K, basis, dims, d):
         )
         indices = torch.from_numpy(K).to(prec_type).to(device).requires_grad_(False)
         f_hat_temp, _ = OMP_Chebyshev(samples, values, indices, num_iters=W, tol=1e-7)
-        f_hat = (f_hat_temp.detach().cpu().numpy()).squeeze()
+        f_hat = f_hat_temp.detach().cpu().numpy().reshape(-1)
     elif basis in ["Cheby_COSAMP", "Cheby_COSAMP+"]:
         samples = torch.from_numpy(Xi).to(prec_type).to(device).requires_grad_(False)
         values = (
-            torch.from_numpy(f)
+            torch.from_numpy(real_samples_for_sparse_recovery(f))
             .to(prec_type)
             .view(-1, 1)
             .to(device)
@@ -647,9 +671,9 @@ def evaluate_cubature(W, Xi, f, K, basis, dims, d):
         )
         indices = torch.from_numpy(K).to(prec_type).to(device).requires_grad_(False)
         f_hat_temp, _ = COSAMP_Chebyshev(samples, values, indices, sparsity=W, tol=1e-5)
-        f_hat = (f_hat_temp.detach().cpu().numpy()).squeeze()
+        f_hat = f_hat_temp.detach().cpu().numpy().reshape(-1)
     else:
-        raise ValueError(f"evaluate_quadrature for basis {basis} not defined")
+        raise ValueError(f"evaluate_cubature for basis {basis} not defined")
 
     return f_hat
 
@@ -671,11 +695,11 @@ def Atb_cmr1l(b, K, W):
 
 
 def Ax_cmr1lss(x, K, W):
-    return multi_CR1L_subsampled_FFT(x, K, W, "notransp")
+    return multi_CR1L_subsampled_FFT(x, K, W, "notransp", "weighted")
 
 
 def Atb_cmr1lss(b, K, W):
-    return multi_CR1L_subsampled_FFT(b, K, W, "transp")
+    return multi_CR1L_subsampled_FFT(b, K, W, "transp", "weighted")
 
 
 def unique_up_to_sign(K):

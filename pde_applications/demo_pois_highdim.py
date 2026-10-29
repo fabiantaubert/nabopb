@@ -120,7 +120,19 @@ A = LinearOperator(
 )
 maxit = 100
 tol = 1e-8
-f_hat = lsqr(A, f, atol=tol, btol=tol, iter_lim=maxit)[0]
+lsqr_result = lsqr(A, f, atol=tol, btol=tol, iter_lim=maxit)
+f_hat = lsqr_result[0]
+
+istop = lsqr_result[1]
+itn = lsqr_result[2]
+rnorm = lsqr_result[3]
+
+if istop == 7:
+    print(
+        f"Warning: LSQR reached the iteration limit ({itn}) "
+        f"without satisfying the stopping criteria. "
+        f"Residual norm: {rnorm:.3e}"
+    )
 time_4 = time.time() - t4
 
 # Testing and Plotting for a single function f

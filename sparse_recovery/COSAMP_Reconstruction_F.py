@@ -47,7 +47,6 @@ def COSAMP_Fourier(
         tol=tol * norm,
     )
     residuals = torch.linalg.norm(A(rec) - b)
-    print("Final residual:", residuals.item())
     rec_complex = rec[:, 0] + 1j * rec[:, 1]
     rec_complex = rec_complex.unsqueeze(1)
     return rec_complex, residuals
@@ -100,7 +99,7 @@ def COSAMP_Fourier_grouped(
             tol=1e-5,
             max_iter=500,
             parallel_dim=None,
-            verbose=True,
+            verbose=False,
         )
 
         cand_score = lsr_rec.norm(dim=-1)
@@ -119,8 +118,6 @@ def COSAMP_Fourier_grouped(
         if torch.abs(res_norm - res_norm_old) / (torch.abs(res_norm) + 1e-8) < tol:
             break
 
-        if j % 5 == 0:
-            print("Iteration:", j + 1, " Residual:", res_norm.item())
 
         res_norm_old = res_norm
 

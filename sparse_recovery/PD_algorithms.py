@@ -1,7 +1,7 @@
 import math
 import torch
 import numpy as np
-from tqdm.notebook import tqdm
+from tqdm.auto import tqdm
 
 
 def pd_rLASSO(
@@ -47,8 +47,6 @@ def pd_rLASSO(
         if vals[-1] - vals_dual[-1] < max(tol, eps):
             break
 
-    print(j)
-    print(vals[-1] - vals_dual[-1])
 
     return x, y, vals, vals_dual
 

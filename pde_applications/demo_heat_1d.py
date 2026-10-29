@@ -1,3 +1,4 @@
+from pathlib import Path
 import numpy as np
 from scipy.integrate import solve_ivp
 from scipy.interpolate import interp1d
@@ -57,6 +58,13 @@ def solve_heat_at_multiple(var1, a_coeffs, alpha=0.25, nx=1000, rtol=1e-8, atol=
     # Extract x and t arrays
     x_query = var1[:, 0]
     t_query = var1[:, 1]
+
+    # At t = 0, the solution equals the initial condition; no integration is needed.
+    if np.all(t_query == 0):
+        u_out = np.zeros(len(x_query))
+        for l, a_l in enumerate(a_coeffs, start=1):
+            u_out += a_l * np.sin(l * np.pi * x_query)
+        return u_out.reshape(-1, 1)
 
     # Build spatial grid
     x_vals = np.linspace(0, 1, nx)
@@ -126,7 +134,7 @@ def solve_multiple(args):
 
 def solve_heat_v1(var):
     # Parallel solution of the differential equation
-    with Pool(processes=96) as pool:
+    with Pool() as pool:
         result = pool.map(solve_single, var)
 
     return np.array(result, dtype=np.complex128)
@@ -138,7 +146,7 @@ def solve_heat_v2(var1, var2, blocksize=1):
     tasks = [
         (var1[i * blocksize : (i + 1) * blocksize, :], var2[i, :]) for i in range(M)
     ]
-    with Pool(processes=96) as pool:
+    with Pool() as pool:
         result = pool.map(solve_multiple, tasks)
 
     return np.vstack(result)
@@ -150,6 +158,7 @@ s = 1000  # sparsity
 pde_dims = 2  # For NABOPB_for_PDE
 
 basis_flag = "Cheby_OMP+"  # Specifies approximation basis and CRM
+# basis_flag = "Cheby_OMP"  # For standard NABOPB
 
 gamma = {  # Define the search space Gamma
     "type": "full",
@@ -160,7 +169,7 @@ gamma = {  # Define the search space Gamma
 
 diminc = {"type": "default"}  # Set the dimension-incremental strategy
 
-# Compute the approximation
+# Compute the approximation (choose the matching basis_flag above)
 
 # result = NABOPB(solve_heat_v1, d, basis_flag, gamma, diminc, s)
 result = NABOPB_for_PDE(solve_heat_v2, pde_dims, d, basis_flag, gamma, diminc, s)
@@ -174,8 +183,8 @@ def build_filename(s, N, optional=""):
 
 
 # Set folder, create file path. Note: Use 'optional' to save multiple versions with same s and N.
-folder = "results_heat_1d"
-file_path = os.path.join(folder, build_filename(s, gamma["N"], optional="OMP+"))
+folder = Path(__file__).resolve().parent / "results_heat_1d"
+file_path = os.path.join(folder, build_filename(s, gamma["N"], optional=basis_flag.split("_", 1)[1]))
 
 if not os.path.exists(folder):
     os.makedirs(folder)

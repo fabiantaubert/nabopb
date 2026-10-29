@@ -1,4 +1,4 @@
-import h5py
+from pathlib import Path
 import numpy as np
 from mpmath import zeta
 from fenics import *
@@ -173,14 +173,14 @@ def solve_multiple(args):
     return solve_pde_at_multiple_points(var1_block, y_coeffs)
 
 
-def solve_diff_v2(var1, var2, blocksize=1, n_cores=96):
+def solve_diff_v2(var1, var2, blocksize=1):
     M = var2.shape[0]
 
     tasks = [
         (var1[i * blocksize : (i + 1) * blocksize, :], var2[i, :]) for i in range(M)
     ]
 
-    with Pool(processes=n_cores) as pool:
+    with Pool() as pool:
         result = pool.map(solve_multiple, tasks)
 
     return np.vstack(result)  # (M*blocksize, 1)
@@ -192,6 +192,7 @@ s = 1000  # sparsity
 pde_dims = 2  # For NABOPB_for_PDE
 
 basis_flag = "Cheby_OMP+"  # Specifies approximation basis and CRM
+# basis_flag = "Cheby_OMP"  # For standard NABOPB
 
 gamma = {  # Define the search space Gamma
     "type": "full",
@@ -203,7 +204,7 @@ gamma = {  # Define the search space Gamma
 
 diminc = {"type": "default"}  # Set the dimension-incremental strategy
 
-# Compute the approximation
+# Compute the approximation (choose the matching basis_flag above)
 # result = NABOPB(solve_diff, d, basis_flag, gamma, diminc, s)
 result = NABOPB_for_PDE(solve_diff_v2, pde_dims, d, basis_flag, gamma, diminc, s)
 
@@ -216,8 +217,8 @@ def build_filename(s, N, optional=""):
 
 
 # Set folder, create file path. Note: Use 'optional' to save multiple versions with same s and N.
-folder = "results_diff_pde"
-file_path = os.path.join(folder, build_filename(s, gamma["N"], optional="OMP+"))
+folder = Path(__file__).resolve().parent / "results_diff_pde"
+file_path = os.path.join(folder, build_filename(s, gamma["N"], optional=basis_flag.split("_", 1)[1]))
 
 if not os.path.exists(folder):
     os.makedirs(folder)

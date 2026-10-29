@@ -1,3 +1,4 @@
+from pathlib import Path
 import numpy as np
 from scipy.integrate import solve_ivp
 from scipy.interpolate import interp1d
@@ -82,8 +83,8 @@ def solve_burgers_multiple(var1_block, a_coeffs, nu=0.05, nx=1000):
         u0,
         t_eval=[1.0],
         method="Radau",
-        rtol=1e-8,
-        atol=1e-10,
+        rtol=1e-6,
+        atol=1e-8,
     )
 
     u_T = sol.y[:, 0]  # solution at t=1
@@ -120,7 +121,7 @@ def solve_burgers_v2(var1, var2, blocksize=1):
     tasks = [
         (var1[i * blocksize : (i + 1) * blocksize, :], var2[i, :]) for i in range(M)
     ]
-    with Pool(processes=96) as pool:
+    with Pool() as pool:
         result = pool.map(solve_multiple, tasks)
 
     return np.vstack(result)
@@ -132,6 +133,7 @@ s = 1000  # sparsity
 pde_dims = 1  # For NABOPB_for_PDE
 
 basis_flag = "Cheby_OMP+"  # Specifies approximation basis and CRM
+# basis_flag = "Cheby_OMP"  # For standard NABOPB
 
 gamma = {  # Define the search space Gamma
     "type": "full",
@@ -142,7 +144,7 @@ gamma = {  # Define the search space Gamma
 
 diminc = {"type": "default"}  # Set the dimension-incremental strategy
 
-# Compute the approximation
+# Compute the approximation (choose the matching basis_flag above)
 # result = NABOPB(solve_burgers_v1, d, basis_flag, gamma, diminc, s)
 result = NABOPB_for_PDE(
     solve_burgers_v2, pde_dims, d, basis_flag, gamma, diminc, s, pde_disc=9
@@ -157,8 +159,8 @@ def build_filename(s, N, optional=""):
 
 
 # Set folder, create file path. Note: Use 'optional' to save multiple versions with same s and N.
-folder = "results_burgers_1d"
-file_path = os.path.join(folder, build_filename(s, gamma["N"], optional="OMP+"))
+folder = Path(__file__).resolve().parent / "results_burgers_1d"
+file_path = os.path.join(folder, build_filename(s, gamma["N"], optional=basis_flag.split("_", 1)[1]))
 
 if not os.path.exists(folder):
     os.makedirs(folder)

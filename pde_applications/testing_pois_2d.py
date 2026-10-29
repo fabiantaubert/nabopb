@@ -1,3 +1,4 @@
+from pathlib import Path
 import numpy as np
 import pickle
 import matplotlib.pyplot as plt
@@ -73,47 +74,42 @@ def eval_cheby(x, val, index):
 
 
 def single_error(args):
-    # Compute the relative l2-error for a single sample
     i, a, results = args
 
-    # Solve PDE to get reference solution
+    # Solve the PDE for the reference values at the FEM mesh vertices.
     points, ex_sol = solve_pde(a[i, :])
 
-    # Broadcast a[i, :] for eval_cheby
+    # Evaluate the selected approximation at the same points.
     a_temp = np.broadcast_to(a[i, :], (points.shape[0], a.shape[1]))
-
-    # Solution by our approximation
     approx_sol = eval_cheby(
-        np.hstack([points * 2 - 1, a_temp]), results["val"], results["index"]
+        np.hstack([points * 2 - 1, a_temp]),
+        results["val"],
+        results["index"],
     )
 
-    # Compute relative L2-error
     return np.linalg.norm(ex_sol - approx_sol, 2) / np.linalg.norm(ex_sol, 2)
 
 
 def parallel_error(N, results):
-    # Random draws of a
-    a = np.random.rand(N, 9) * 2 - 1
-
-    # Prepare arguments for parallel processing
+    rng = np.random.default_rng(12345)
+    a = rng.uniform(-1, 1, size=(N, 9))
     args = [(i, a, results) for i in range(N)]
 
-    # Parallel error computation
     with Pool() as pool:
         err = pool.map(single_error, args)
 
-    return np.array(err)
+    return np.asarray(err)
 
 
-# Load approximation results
-file_path = "results_pois_2d/s100n16.pickle"
+# Load one selected approximation; change the filename to test another setting.
+file_path = Path(__file__).resolve().parent / "results_pois_2d" / "s1000n64.pickle"
 with open(file_path, "rb") as file:
     results = pickle.load(file)
 
-# Run error computation
-err = parallel_error(10**2, results)
+# Evaluate the approximation on 10,000 parameter vectors.
+err = parallel_error(10**4, results)
 
-# Plot the error
+# Display the error distribution without writing an output file.
 plt.figure(figsize=(8, 2.5))
 plt.boxplot(
     err,
@@ -133,8 +129,8 @@ plt.boxplot(
     ),
 )
 plt.xscale("log")
-plt.xlabel("Relative $L^2$ error (log scale)", fontsize=12)
-plt.title("Boxplot of relative $L^2$ Errors for the 2D Poisson equation", fontsize=13)
+plt.xlabel(r"Relative $L^2$ error (log scale)", fontsize=12)
+plt.title("Boxplot of relative $L^2$ errors for the 2D Poisson equation", fontsize=13)
 plt.grid(True, axis="x", linestyle="--", alpha=0.6)
 plt.tight_layout()
 plt.show()

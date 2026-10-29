@@ -1,6 +1,5 @@
 import numpy as np
 import time
-from multiprocessing import Pool
 import NABOPB_subroutines as nabopb
 
 
@@ -29,7 +28,7 @@ def NABOPB(
         A function handle that accepts sampling nodes as an array of size [num_nodes, d].
 
     d : int
-        Dimensionality of the function's domain.
+        Dimensionality of the function's domain (d >= 2).
 
     basis_flag : str
         Specifies the type of basis and reconstruction method. Options include:
@@ -53,48 +52,41 @@ def NABOPB(
         - 'w': Weights defining the shape of the search space (scalar or array of size d).
         - 'superpos': Superposition dimension d_s (||k||_0 <= d_s).
         - 'sgn': Specifies index sign constraints ('default' or 'non-negative').
+          Chebyshev bases require 'non-negative'.
         - 'type': Specifies the grid type:
           - 'full': Full grid up to extension N in d dimensions.
           - 'sym_hc': Symmetric hyperbolic cross with extension N (scalar) and weights w.
 
     diminc : dict, optional
         Specifies the dimension-incremental strategy. Possible keys include:
-        - 'workers': Maximum number of parallel workers.
-        - 'type': Strategy type ('default' or 'dyadic').
+        - 'type': Strategy type ('default').
 
     sparsity_s : int, optional
-        Target sparsity of the output. Default is (2 * N_gamma + 1)^d.
+        Target sparsity of the output. Defaults to (2*N+1)^d
+        for scalar N and the product of (2*N_j+1) over all
+        dimensions for array-valued N.
 
     sparsity_s_local : int, optional
-        Local target sparsity for intermediate steps. Defaults to `sparsity_s`.
+        Local target sparsity for intermediate steps.
+        Must be at least `sparsity_s`. Defaults to `sparsity_s`.
 
     delta : float, optional
-        Relative threshold for truncation at each step. Default is 1e-12.
+        Absolute threshold for coefficient detection. Default is 1e-12.
 
     niter_r : int, optional
         Number of detection iterations. Default is 5.
 
     Returns:
     --------
-    index : ndarray
-        Detected indices corresponding to the largest basis coefficients,
-        of shape [#index, d].
-
-    val : ndarray
-        Corresponding basis coefficients.
-
-    sample_sizes : list
-        Number of samples used in each dimension-incremental step.
-
-    cand_sizes : list
-        Cardinality of candidate sets used.
-
-    run_times : dict
-        Computation times for various steps:
-        - 'quadrature': Total time for quadrature construction.
-        - 'sampling': Total time for sampling.
-        - 'evaluation': Total time for quadrature evaluation.
-        - 'total': Total runtime of the algorithm.
+    result : dict
+        Dictionary containing:
+        - 'index': Detected indices, ndarray of shape (#indices, d).
+        - 'val': Corresponding basis coefficients, ndarray.
+        - 'sample_sizes': Sample counts, ndarray of length d.
+        - 'cand_sizes': Candidate-set sizes, ndarray of length d.
+        - 'run_times': Runtime statistics, ndarray of length 4,
+          containing construction, sampling, evaluation, and
+          total runtime, in that order.
 
     References:
     -----------
@@ -105,18 +97,34 @@ def NABOPB(
 
     # Default parameters
     if gamma is None:
-        gamma = {"type": "full", "N": 32, "sgn": "default"}
+        if basis_flag.startswith("Cheby_"):
+            gamma = {"type": "full", "N": 32, "sgn": "non-negative"}
+        else:
+            gamma = {"type": "full", "N": 32, "sgn": "default"}
+    if basis_flag.startswith("Cheby_") and gamma.get("sgn") != "non-negative":
+        raise ValueError(
+            "Chebyshev bases require gamma['sgn'] = 'non-negative'."
+        )
     if diminc is None:
         diminc = {"type": "default"}
     if sparsity_s is None:
-        sparsity_s = (2 * gamma["N"] + 1) ** d
+        if np.isscalar(gamma["N"]):
+            sparsity_s = (2 * gamma["N"] + 1) ** d
+        else:
+            sparsity_s = 1
+            for N_j in gamma["N"]:
+                sparsity_s *= 2 * int(N_j) + 1
     if sparsity_s_local is None:
         sparsity_s_local = sparsity_s
 
     # Parameter checks
     check_naturalnumber_or_error(d, "dimensionality d")
+    if d < 2:
+        raise ValueError("NABOPB requires d >= 2.")
     check_naturalnumber_or_error(sparsity_s, "parameter s")
     check_naturalnumber_or_error(sparsity_s_local, "parameter s_local")
+    if sparsity_s > sparsity_s_local:
+        raise ValueError("Parameter s must not exceed s_local.")
     check_0leq_param_or_error(delta, "parameter delta")
     check_naturalnumber_or_error(niter_r, "parameter niter_r")
     if "superpos" in gamma:
@@ -140,7 +148,6 @@ def NABOPB(
         # Preallocation
         I = {(2, 2): []}
         # First 1D-detection
-        print("Step 1:")
         I[(1, 1)], sample_sizes_j, cand_sizes_j, run_times_j = detect_1D(
             np.array([1]),
             fct_handle,
@@ -151,12 +158,12 @@ def NABOPB(
             delta,
             niter_r,
         )
+        if I[(1, 1)].shape[0] == 0:
+            raise ValueError("No indices were detected during 1D detection for dimension 1.")
         sample_sizes[0] += sample_sizes_j
         cand_sizes[0] += cand_sizes_j
         run_times[:3] += run_times_j
         I[(1, 2)] = np.array([1])
-        # Step 2
-        print("Step 2:")
         for t in range(2, d + 1):
             # New 1D-detection
             I[(2, 1)], sample_sizes_j, cand_sizes_j, run_times_j = detect_1D(
@@ -169,6 +176,10 @@ def NABOPB(
                 delta,
                 niter_r,
             )
+            if I[(2, 1)].shape[0] == 0:
+                raise ValueError(
+                    f"No indices were detected during 1D detection for dimension {t}."
+                )
             sample_sizes[0] += sample_sizes_j
             cand_sizes[0] += cand_sizes_j
             run_times[:3] += run_times_j
@@ -192,105 +203,15 @@ def NABOPB(
                 delta,
                 niter_r,
             )
+            if I[(1, 1)].shape[0] == 0:
+                raise ValueError(
+                    f"No indices were detected during the increment to dimension {t}."
+                )
             sample_sizes[t - 1] += sample_sizes_j
             cand_sizes[t - 1] += cand_sizes_j
             run_times[:3] += run_times_j
         sortIdx = np.argsort(I[(1, 2)])
         index = I[(1, 1)][:, sortIdx]
-        print(f"Algorithm finished with {index.shape[0]} detected indices.\n\n")
-        run_times[3] = time.time() - tAll
-    # TO CHECK
-    elif diminc["type"] == "dyadic":
-        # Preallocation
-        I = {(d, 2): []}
-        # 1D-detections
-        print("Step 1:")
-        with Pool(diminc["workers"]) as pool:
-            async_detections = [
-                pool.apply_async(
-                    detect_1D,
-                    (
-                        j,
-                        fct_handle,
-                        d,
-                        gamma,
-                        basis_flag,
-                        sparsity_s_local,
-                        delta,
-                        niter_r,
-                    ),
-                )
-                for j in range(1, d + 1)
-            ]
-            for j, detection in enumerate(async_detections):
-                temp, sample_sizes_j, cand_sizes_j, run_times_j = detection.get()
-                # I[(j + 1, :)] = temp, j + 1
-                sample_sizes[0] += sample_sizes_j
-                cand_sizes[0] += cand_sizes_j
-                run_times[:3] += run_times_j
-        # Step 2
-        sample_sizes_j = 0
-        cand_sizes_j = 0
-        run_times_j = np.zeros(3)
-        J = {(1, 2): []}
-        while len(I) > 2:
-            with Pool(diminc["workers"]) as pool:
-                async_increments = [
-                    pool.apply_async(
-                        increment,
-                        (
-                            I[2 * k - 1],
-                            I[2 * k],
-                            fct_handle,
-                            d,
-                            gamma,
-                            basis_flag,
-                            sparsity_s,
-                            sparsity_s_local,
-                            delta,
-                            niter_r,
-                        ),
-                    )
-                    for k in range(1, len(I) // 2 + 1)
-                ]
-                for k, increment_result in enumerate(async_increments):
-                    (
-                        tempA,
-                        tempB,
-                        _,
-                        sample_sizes_j,
-                        cand_sizes_j,
-                        run_times_j,
-                    ) = increment_result.get()
-                    # J[(k + 1, :)] = tempA, tempB
-                    sample_sizes[len(J[(k + 1, 2)])] += sample_sizes_j
-                    cand_sizes[len(J[(k + 1, 2)])] += cand_sizes_j
-                    run_times[:3] += run_times_j
-            if len(I) % 2 == 1:
-                # J[(len(J) + 1, :)] = I[len(I) - 1]
-                pass
-            len_J = [len(J[(l + 1, 2)]) for l in range(len(J))]
-            sortIdx = np.argsort(len_J)
-            I = {(l + 1, 1): J[(sortIdx[l] + 1, 1)] for l in range(len(sortIdx))}
-            J = {(1, 2): []}
-        # Final increment
-        tempA, tempB, val, sample_sizes_j, cand_sizes_j, run_times_j = increment(
-            I,
-            fct_handle,
-            d,
-            gamma,
-            basis_flag,
-            sparsity_s,
-            sparsity_s_local,
-            delta,
-            niter_r,
-        )
-        # J[(1, :)] = tempA, tempB
-        sample_sizes[d - 1] += sample_sizes_j
-        cand_sizes[d - 1] += cand_sizes_j
-        run_times[:3] += run_times_j
-        sortIdx = np.argsort(J[(1, 2)])
-        index = J[(1, 1)][:, sortIdx]
         print(f"Algorithm finished with {index.shape[0]} detected indices.\n\n")
         run_times[3] = time.time() - tAll
     else:
@@ -349,14 +270,16 @@ def increment(
     if "superpos" in gamma:
         superpos_idx = np.sum(K != 0, axis=1) <= gamma["superpos"]
         K = K[superpos_idx, :]
-        if K.size == 0:
-            raise ValueError(
-                "Superposition assumption resulted in an empty candidate set K!"
-            )
+    if K.shape[0] == 0:
+        raise ValueError(
+            "The candidate set K is empty. "
+            "Check the search space and previously detected indices."
+        )
     cand_sizes += K.shape[0]
     # Construction of the sampling set and the cubature
     tConstruct = time.time()
-    W, Xi = nabopb.construct_cubature(K, basis_flag, dims, d, sparsity_s_local)
+    s_crm = sparsity_s_local if len(dims) < d else sparsity_s
+    W, Xi = nabopb.construct_cubature(K, basis_flag, dims, d, s_crm)
     run_times[0] += time.time() - tConstruct
     I = []
     if len(dims) < d:
@@ -431,7 +354,7 @@ def detect_1D(j, fct_handle, d, gamma, basis_flag, sparsity_s_local, delta, nite
             weight = gamma["w"]
         else:
             weight = gamma["w"][j[0] - 1]
-        max_val = 2 ** gamma["N"] * weight
+        max_val = int(2 ** gamma["N"] * weight)
         if gamma["sgn"] == "default":
             K = np.arange(-max_val, max_val + 1).reshape(-1, 1)
         elif gamma["sgn"] == "non-negative":
@@ -440,6 +363,11 @@ def detect_1D(j, fct_handle, d, gamma, basis_flag, sparsity_s_local, delta, nite
             raise ValueError(f'{gamma["sgn"]} as Gamma Signum is not defined.')
     else:
         raise ValueError(f'{gamma["type"]} as Gamma type is not defined.')
+    if K.shape[0] == 0:
+        raise ValueError(
+            "The candidate set K is empty. "
+            "Check the search space and previously detected indices."
+        )
     cand_sizes += K.shape[0]
     # Construction of the sampling set and the cubature
     tConstruct = time.time()

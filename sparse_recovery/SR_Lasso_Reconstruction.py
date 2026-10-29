@@ -36,8 +36,6 @@ def SR_Lasso_Fourier(
         s0, A, AT, b, lam=lam_est, tol=tol, restarts=restarts, beta=beta, alpha=alpha
     )
 
-    print(torch.linalg.norm(A(rec) - b))
-
     rec = rec * norm_f
 
     rec_complex = rec[:, 0] + 1j * rec[:, 1]
@@ -84,12 +82,6 @@ def SR_Lasso_Chebyshev(
     rec, vals, vals_dual = restart_pd_rLASSO(
         s0, A, AT, b, lam=lam_est, tol=tol, restarts=restarts, beta=beta, alpha=alpha
     )
-
-    def L2_norm_train(rec):
-        return torch.linalg.norm(A_op(rec) - values / norm_f) / (math.sqrt(N))
-
-    print("Final residual in algorithm is", L2_norm_train(rec).item())
-    print("Duality Gap is", vals[-1] - vals_dual[-1])
 
     rec = rec * norm_f
 
