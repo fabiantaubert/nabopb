@@ -117,6 +117,7 @@ s = 1000  # sparsity
 pde_dims = 1
 
 basis_flag = "Cheby_OMP+"  # Specifies approximation basis and cubature method
+# basis_flag = "Cheby_OMP"  # For standard NABOPB
 
 gamma = {  # Define the search space Gamma
     "type": "full",
@@ -127,7 +128,8 @@ gamma = {  # Define the search space Gamma
 
 diminc = {"type": "default"}  # Set the dimension-incremental strategy
 
-# Compute the approximation
+# Compute the approximation (choose the matching basis_flag above)
+# result = NABOPB(solve_ode_pwc, d, basis_flag, gamma, diminc, s)
 result = NABOPB_for_PDE(solve_ode_pwc_v2, pde_dims, d, basis_flag, gamma, diminc, s)
 
 # %% Save results
@@ -140,7 +142,7 @@ def build_filename(s, N, optional=""):
 
 # Set folder, create file path. Note: Use 'optional' to save multiple versions with same s and N.
 folder = Path(__file__).resolve().parent / "results_ode_pwc"
-file_path = os.path.join(folder, build_filename(s, gamma["N"], optional="OMP+"))
+file_path = os.path.join(folder, build_filename(s, gamma["N"], optional=basis_flag.split("_", 1)[1]))
 
 if not os.path.exists(folder):
     os.makedirs(folder)
