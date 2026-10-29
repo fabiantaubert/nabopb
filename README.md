@@ -29,6 +29,17 @@ The repository has since been extended and now also serves as the accompanying s
 
 ## ▶️ Getting Started
 
+**Windows users:** Native Windows is currently not supported due to compatibility issues with the `pykeops` dependency, which also requires a C++ compiler. We recommend using the Windows Subsystem for Linux (WSL) with Ubuntu. Install WSL by running `wsl --install` in PowerShell as administrator. Then, inside Ubuntu, install the required development tools:
+
+```bash
+sudo apt update
+sudo apt install build-essential python3-venv python3-pip
+```
+
+Afterwards, follow the installation instructions below from within WSL. VS Code can connect to the WSL environment using its [WSL extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-wsl).
+
+**Note:** This setup has not been tested by the authors.
+
 First, install the required Python packages from the repository root:
 
 ```bash
