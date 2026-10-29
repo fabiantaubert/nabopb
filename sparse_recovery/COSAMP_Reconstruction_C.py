@@ -57,7 +57,6 @@ def COSAMP_Chebyshev(samples, values, indices, sparsity=5000, num_iters=100, tol
         tol=tol * norm,
     )
     residuals = torch.linalg.norm(A(rec) - b)
-    print("Final residual:", residuals.item())
     return rec, residuals
 
 
@@ -98,7 +97,7 @@ def COSAMP(A, AT, normalization, b, f, p, sparsity=5000, num_iters=100, tol=1e-3
             tol=1e-5,
             max_iter=500,
             parallel_dim=-1,
-            verbose=True,
+            verbose=False,
         )
 
         lsr_flat = lsr_rec.flatten()
@@ -113,8 +112,6 @@ def COSAMP(A, AT, normalization, b, f, p, sparsity=5000, num_iters=100, tol=1e-3
         res_norm = torch.linalg.vector_norm(res)
         if torch.abs(res_norm - res_norm_old) / torch.abs(res_norm + 1e-8) < tol:
             break
-        if j % 5 == 0:
-            print("Iteration:", j + 1, " Residual:", res_norm.item())
         res_norm_old = res_norm
     return x.view(-1, 1)
 
