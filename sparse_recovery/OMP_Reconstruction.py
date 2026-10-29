@@ -102,7 +102,6 @@ def OMP_Fourier(samples, values, frequencies, num_iters=2000, tol=5e-6):
     rec_complex = rec_complex.unsqueeze(1)
 
     residuals = torch.linalg.norm(A(rec) - b)
-    print("Final residual:", residuals.item(), "Nonzero amount:", nnz)
     return rec_complex, residuals
 
 
@@ -146,7 +145,6 @@ def OMP2_Fourier(
 
     # Cap iterations: each frequency contributes 2 atoms, stay within budget
     max_freq_iters = min(num_iters, M, math.floor(b.size(0) / 2))
-    print(max_freq_iters)
     max_atoms = 2 * max_freq_iters
 
     selected_freq = torch.zeros(max_freq_iters, device=device, dtype=torch.long)
@@ -223,8 +221,6 @@ def OMP2_Fourier(
 
         residual = res.norm() / math.sqrt(N)
         actual_iters = j + 1
-        if j % 100 == 0:
-            print("Iteration:", actual_iters, " Residual:", residual.item())
         if residual < tol:
             break
 
@@ -289,7 +285,6 @@ def OMP_Chebyshev(samples, values, indices, num_iters=2000, tol=5e-6):
         tol=tol * norm,
     )
     residuals = torch.linalg.norm(A(rec) - b) / math.sqrt(b.size(0))
-    print("Final residual:", residuals.item(), "Nonzero amount:", nnz)
     return rec, residuals
 
 
@@ -342,8 +337,6 @@ def OMP2(col_extractor, A, AT, normalization, b, f, p, num_iters=1500, tol=1e-7)
         res = b - A(out[: j + 1], mask_indices=selected_indices[: j + 1])
 
         residual = torch.linalg.vector_norm(res) / math.sqrt(N)
-        if j % 100 == 0:
-            print("Iteration:", j + 1, " Residual:", residual.item())
         if residual < tol:
             num_iters = j + 1
             break
@@ -375,10 +368,6 @@ def OMP(col_extractor, AT, normalization, b, f, p, num_iters=1500, tol=1e-7):
 
     num_iters = min(num_iters, x.size(0))
     for j in range(num_iters):
-        if j % 50 == 0:
-            print(
-                "Iteration:", j + 1, " Residual:", torch.linalg.vector_norm(res).item()
-            )
         if (torch.linalg.vector_norm(res)) < tol:
             num_iters = j
             break
