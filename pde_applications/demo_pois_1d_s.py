@@ -142,6 +142,7 @@ s = 1000  # sparsity
 pde_dims = 1
 
 basis_flag = "Cheby_OMP"  # Specifies approximation basis and cubature method
+# basis_flag = "Cheby_OMP+"  # For PDE-aware NABOPB_for_PDE
 
 gamma = {  # Define the search space Gamma
     "type": "full",
@@ -152,11 +153,10 @@ gamma = {  # Define the search space Gamma
 
 diminc = {"type": "default"}  # Set the dimension-incremental strategy
 
-# Compute the approximation
+# Compute the approximation (choose the matching basis_flag above)
 result = NABOPB(
     lambda var: solve_pois1d(var, tol=1e-6), d, basis_flag, gamma, diminc, s
 )
-# To use OMP+, change basis_flag to "Cheby_OMP+" and use instead:
 # result = NABOPB_for_PDE(solve_pois1d_v2, pde_dims, d, basis_flag, gamma, diminc, s)
 
 # %% Save results
@@ -169,7 +169,7 @@ def build_filename(s, N, optional=""):
 
 # Set folder, create file path. Note: Use 'optional' to save multiple versions with same s and N.
 folder = Path(__file__).resolve().parent / "results_pois_1d_s"
-file_path = os.path.join(folder, build_filename(s, gamma["N"], optional="OMP"))
+file_path = os.path.join(folder, build_filename(s, gamma["N"], optional=basis_flag.split("_", 1)[1]))
 
 if not os.path.exists(folder):
     os.makedirs(folder)
