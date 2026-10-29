@@ -6,4 +6,6 @@ authors:
     orcid: "https://orcid.org/0000-0003-4314-7136"
 title: "NABOPB: Nonlinear approximation in bounded orthonormal product bases"
 version: 3.0.0
+doi: 10.5281/zenodo.23767890
+date-released: 2026-10-29
 url: "https://github.com/fabiantaubert/nabopb"
