@@ -1,4 +1,3 @@
-import h5py
 from pathlib import Path
 import numpy as np
 from mpmath import zeta
