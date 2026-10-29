@@ -357,7 +357,6 @@ def increment(
                 Xi_temp = Xi
                 sample_sizes += 1
             run_times[1] += time.time() - tSampling
-            print(Xi.shape)
             # Computation of the projected coefficients
             tEvaluate = time.time()
             f_hat = nabopb.evaluate_cubature(W, Xi_temp, f, K, basis_flag, dims, d)
