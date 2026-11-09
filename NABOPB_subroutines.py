@@ -2,6 +2,7 @@ import numpy as np
 from r1lfft import *
 from mr1lfft import *
 from cmr1lfft import *
+from scr1lfft import *
 from scipy.fft import dct
 from scipy.linalg import lstsq
 from scipy.sparse import csr_matrix
@@ -81,6 +82,8 @@ def random_number(d, dims, basis, number_points=1):
         "Cheby_rand",
         "Cheby_mr1l",
         "Cheby_mr1l_subsampling",
+        "Cheby_sr1l",
+        "Cheby_msr1l",
         "Cheby_SRLasso",
         "Cheby_SRLasso+",
         "Cheby_OMP",
@@ -163,7 +166,7 @@ def construct_cubature_1d(K, basis, j, d, s):
         W = max(1, int(np.ceil(n * np.log(n))))
         Xi = np.sort(np.sin(np.pi * (np.random.rand(W) - 0.5)))
 
-    elif basis in {"Cheby_mr1l", "Cheby_mr1l_subsampling"}:
+    elif basis in {"Cheby_mr1l", "Cheby_mr1l_subsampling", "Cheby_sr1l", "Cheby_msr1l"}:
         # DCT-I of length W+1
         W = max(1, int(np.max(K)))
         Xi = np.cos(np.pi * np.linspace(0, 1, W + 1))
@@ -305,6 +308,28 @@ def construct_cubature(K, basis, dims, d, s, pde_dims=None):
         max_os_factor = 3
         W = multi_CR1L_weights(K, W, int(np.ceil(max_os_factor * K.shape[0])))
         Xi = np.cos(2 * np.pi * W["subsampling_data"]["xs"])
+    elif basis == "Cheby_sr1l":
+        # Shifted nested cosine rank-1 lattice (CBC with coset capacity), designed for lower sets;
+        # the reserve factor is increased if the final problem is badly conditioned
+        c = 1.25
+        W = None
+        for _ in range(5):
+            try:
+                z, M, delta, reco_infos = SCR1L_search(K, c)
+                W = {"z": z, "M": M, "delta": delta, "reco_infos": reco_infos}
+                if reco_infos["cond"] < 1e8:
+                    break
+            except RuntimeError:
+                pass
+            c *= 1.5
+        if W is None:
+            raise RuntimeError("construct_cubature: no shifted rank-1 lattice found for 'Cheby_sr1l'")
+        Xi = SCR1L_nodes(W, "cheby")
+    elif basis == "Cheby_msr1l":
+        # Union of shifted nested cosine rank-1 lattices with peeling (full rank certified)
+        zs, Ms, deltas, reco_infos = multiSCR1L_search(K)
+        W = {"zs": zs, "Ms": Ms, "deltas": deltas, "reco_infos": reco_infos}
+        Xi = multi_SCR1L_nodes(W, "cheby")
     elif basis in {"Cheby_SRLasso", "Cheby_OMP", "Cheby_COSAMP"}:
         W = s
         t = K.shape[1]
@@ -376,7 +401,7 @@ def evaluate_cubature_1d(W, Xi, f, K, basis, j, d):
             2.0 ** ((K != 0) / 2)
         )
         f_hat, _, _, _ = lstsq(phi.T, f)
-    elif basis in ["Cheby_mr1l", "Cheby_mr1l_subsampling"]:
+    elif basis in ["Cheby_mr1l", "Cheby_mr1l_subsampling", "Cheby_sr1l", "Cheby_msr1l"]:
         # DCT-I
         scal = np.ones(W + 1)
         scal[0] = scal[0] / np.sqrt(2)
@@ -636,6 +661,12 @@ def evaluate_cubature(W, Xi, f, K, basis, dims, d):
         )
         f_weighted = np.sqrt(W["subsampling_data"]["ws"]) * f
         f_hat = lsqr(A, f_weighted)[0]
+    elif basis == "Cheby_sr1l":
+        # Weighted least squares in the frequency domain, one FFT
+        f_hat = SCR1L_reconstruct(f, K, W)
+    elif basis == "Cheby_msr1l":
+        # Least squares on all samples of the union, one FFT per lattice
+        f_hat = multi_SCR1L_reconstruct(f, K, W)
     elif basis in ["Cheby_SRLasso", "Cheby_SRLasso+"]:
         samples = torch.from_numpy(Xi).to(prec_type).to(device).requires_grad_(False)
         values = (

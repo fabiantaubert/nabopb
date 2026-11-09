@@ -42,6 +42,9 @@ def NABOPB(
         - 'Cheby_rand': Chebyshev basis on [-1,1]^d with Monte Carlo cubature.
         - 'Cheby_mr1l': Chebyshev basis on [-1,1]^d with Multiple Rank-1 Lattices.
         - 'Cheby_mr1l_subsampling': Chebyshev basis on [-1,1]^d with subsampled Multiple Rank-1 Lattices.
+        - 'Cheby_sr1l': Chebyshev basis on [-1,1]^d with a shifted nested Rank-1 Lattice
+          (designed for downward closed candidate sets; for sparse candidate sets use 'Cheby_msr1l').
+        - 'Cheby_msr1l': Chebyshev basis on [-1,1]^d with a union of shifted nested Rank-1 Lattices.
         - 'Cheby_SRLasso': Chebyshev basis on [-1,1]^d with square root LASSO.
         - 'Cheby_OMP': Chebyshev basis on [-1,1]^d with orthogonal matching pursuit.
         - 'Cheby_COSAMP': Chebyshev basis on [-1,1]^d with COSAMP.

@@ -22,6 +22,7 @@ The repository has since been extended and now also serves as the accompanying s
 - `requirements.txt`: List of Python packages required by the main NABOPB implementation.
 - `bspline_test_10d.py`, `bsplinet_test_9d.py`, `cardinal_bspline.py`: Implementations of test functions based on splines and the cardinal B-spline. Used in the demos and numerical experiments.
 - `r1lfft/`, `mr1lfft/`, `cmr1lfft/`: Python implementations for generating rank-1 lattices and performing fast transforms on them. Based on original MATLAB code by Lutz Kämmerer.
+- `scr1lfft/`: Python implementation of shifted (nested) cosine rank-1 lattices for the Chebyshev basis: divisor chain and component-by-component construction, weighted least squares in the frequency domain, and unions of shifted lattices with peeling (Algorithms 5.1–5.4 of D. Potts, *Cosine approximation on shifted nested rank-1 lattices without the factor 2^d*). Used by the bases `'Cheby_sr1l'` and `'Cheby_msr1l'`.
 - `sparse_recovery/`: Python implementations of OMP, CoSaMP and SR-LASSO. Based on the [SparseRecovery Repository](https://github.com/Zeppo1994/SparseRecovery) by Sebastian Neumayer.
 - `pde_applications/`: Applications of the NABOPB algorithm to differential equations. See below for more details.
 
