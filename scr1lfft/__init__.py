@@ -6,3 +6,4 @@ from .SCR1L_reconstruct import SCR1L_reconstruct
 from .SCR1L_search import SCR1L_search
 from .multiSCR1L_search import multiSCR1L_search
 from .multi_SCR1L_FFT import multi_SCR1L_FFT, multi_SCR1L_nodes, multi_SCR1L_reconstruct
+from .indepSCR1L import indepSCR1L_search, indep_SCR1L_subsample, indep_SCR1L_nodes, indep_SCR1L_reconstruct

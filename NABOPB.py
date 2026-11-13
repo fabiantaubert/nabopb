@@ -45,6 +45,8 @@ def NABOPB(
         - 'Cheby_sr1l': Chebyshev basis on [-1,1]^d with a shifted nested Rank-1 Lattice
           (designed for downward closed candidate sets; for sparse candidate sets use 'Cheby_msr1l').
         - 'Cheby_msr1l': Chebyshev basis on [-1,1]^d with a union of shifted nested Rank-1 Lattices.
+        - 'Cheby_indep': Chebyshev basis on [-1,1]^d with draws proportional to the Christoffel function
+          from independent random shifted Rank-1 Lattices (for arbitrary candidate sets).
         - 'Cheby_SRLasso': Chebyshev basis on [-1,1]^d with square root LASSO.
         - 'Cheby_OMP': Chebyshev basis on [-1,1]^d with orthogonal matching pursuit.
         - 'Cheby_COSAMP': Chebyshev basis on [-1,1]^d with COSAMP.
@@ -62,7 +64,11 @@ def NABOPB(
 
     diminc : dict, optional
         Specifies the dimension-incremental strategy. Possible keys include:
-        - 'type': Strategy type ('default').
+        - 'type': Strategy type ('default' or 'anchor_reuse'). With 'anchor_reuse' (basis 'Cheby_indep'
+          only), the anchors of step t are the tails (x_{t+1}, ..., x_d) of niter_r fixed random points, so
+          that the projected coefficients of step t-1 give one linear constraint per fiber of the candidate
+          set of step t (niter_r constraints in the last step), and only the remaining coefficients are
+          sampled.
 
     sparsity_s : int, optional
         Target sparsity of the output. Defaults to (2*N+1)^d
@@ -147,7 +153,13 @@ def NABOPB(
 
     tAll = time.time()
 
-    if diminc["type"] == "default":
+    if diminc["type"] in ("default", "anchor_reuse"):
+        reuse = diminc["type"] == "anchor_reuse"
+        if reuse:
+            if basis_flag != "Cheby_indep":
+                raise ValueError("The approach 'anchor_reuse' requires the basis 'Cheby_indep'.")
+            anchors = nabopb.random_number(d, np.array([], dtype=int), basis_flag, niter_r)
+            prev = None
         # Preallocation
         I = {(2, 2): []}
         # First 1D-detection
@@ -188,24 +200,45 @@ def NABOPB(
             run_times[:3] += run_times_j
             I[(2, 2)] = np.array([t])
             # Increment
-            (
-                I[(1, 1)],
-                I[(1, 2)],
-                val,
-                sample_sizes_j,
-                cand_sizes_j,
-                run_times_j,
-            ) = increment(
-                I,
-                fct_handle,
-                d,
-                gamma,
-                basis_flag,
-                sparsity_s,
-                sparsity_s_local,
-                delta,
-                niter_r,
-            )
+            if reuse:
+                (
+                    I[(1, 1)],
+                    I[(1, 2)],
+                    val,
+                    sample_sizes_j,
+                    cand_sizes_j,
+                    run_times_j,
+                    prev,
+                ) = increment_reuse(
+                    I,
+                    fct_handle,
+                    d,
+                    gamma,
+                    sparsity_s,
+                    sparsity_s_local,
+                    delta,
+                    anchors,
+                    prev,
+                )
+            else:
+                (
+                    I[(1, 1)],
+                    I[(1, 2)],
+                    val,
+                    sample_sizes_j,
+                    cand_sizes_j,
+                    run_times_j,
+                ) = increment(
+                    I,
+                    fct_handle,
+                    d,
+                    gamma,
+                    basis_flag,
+                    sparsity_s,
+                    sparsity_s_local,
+                    delta,
+                    niter_r,
+                )
             if I[(1, 1)].shape[0] == 0:
                 raise ValueError(
                     f"No indices were detected during the increment to dimension {t}."
@@ -249,35 +282,7 @@ def increment(
     cand_sizes = 0
     run_times = np.zeros(3)
     val2 = 0
-    # Construction of the candidate set K
-    K = []
-    ma = J[(1, 1)].shape[0]
-    mb = J[(2, 1)].shape[0]
-    a, b = np.meshgrid(np.arange(ma), np.arange(mb))
-    product = np.hstack((J[(1, 1)][a.flatten(), :], J[(2, 1)][b.flatten(), :]))
-    dims = np.concatenate((J[(1, 2)], J[(2, 2)]))  # Notation of the dimensions
-    if gamma["type"] == "full":
-        K = product
-    elif gamma["type"] == "sym_hc":
-        if np.isscalar(gamma["w"]):
-            temp = np.abs(product) / gamma["w"]
-        else:
-            weights = gamma["w"][dims - 1]
-            temp = np.abs(product) / np.outer(np.ones(product.shape[0]), weights)
-        temp[temp <= 1] = 1
-        product_idx = 2 ** gamma["N"] >= np.prod(temp, axis=1)
-        K = product[product_idx, :]
-    else:
-        raise ValueError(f'{gamma["type"]} as Gamma type is not defined.')
-    # Check for superposition
-    if "superpos" in gamma:
-        superpos_idx = np.sum(K != 0, axis=1) <= gamma["superpos"]
-        K = K[superpos_idx, :]
-    if K.shape[0] == 0:
-        raise ValueError(
-            "The candidate set K is empty. "
-            "Check the search space and previously detected indices."
-        )
+    K, dims = candidate_set(J, gamma)
     cand_sizes += K.shape[0]
     # Construction of the sampling set and the cubature
     tConstruct = time.time()
@@ -333,6 +338,122 @@ def increment(
         val2 = f_hat[sortIdx]
         sample_sizes += Xi.shape[0]
     return I, dims, val2, sample_sizes, cand_sizes, run_times
+
+
+def candidate_set(J, gamma):
+    # Construction of the candidate set K from the detected sets J[(1, 1)] and J[(2, 1)]
+    ma = J[(1, 1)].shape[0]
+    mb = J[(2, 1)].shape[0]
+    a, b = np.meshgrid(np.arange(ma), np.arange(mb))
+    product = np.hstack((J[(1, 1)][a.flatten(), :], J[(2, 1)][b.flatten(), :]))
+    dims = np.concatenate((J[(1, 2)], J[(2, 2)]))  # Notation of the dimensions
+    if gamma["type"] == "full":
+        K = product
+    elif gamma["type"] == "sym_hc":
+        if np.isscalar(gamma["w"]):
+            temp = np.abs(product) / gamma["w"]
+        else:
+            weights = gamma["w"][dims - 1]
+            temp = np.abs(product) / np.outer(np.ones(product.shape[0]), weights)
+        temp[temp <= 1] = 1
+        product_idx = 2 ** gamma["N"] >= np.prod(temp, axis=1)
+        K = product[product_idx, :]
+    else:
+        raise ValueError(f'{gamma["type"]} as Gamma type is not defined.')
+    # Check for superposition
+    if "superpos" in gamma:
+        superpos_idx = np.sum(K != 0, axis=1) <= gamma["superpos"]
+        K = K[superpos_idx, :]
+    if K.shape[0] == 0:
+        raise ValueError(
+            "The candidate set K is empty. "
+            "Check the search space and previously detected indices."
+        )
+    return K, dims
+
+
+def increment_reuse(J, fct_handle, d, gamma, sparsity_s, sparsity_s_local, delta, anchors, prev):
+    """
+    Increment with the basis 'Cheby_indep' and anchors chosen ahead.
+
+    Anchor r of step t is (anchors[r, t], ..., anchors[r, d-1]), the tail of anchor r of step t-1. The
+    projected coefficients of step t-1 at anchor r, prev["fhat"][r] on prev["K"], give for every k in J[(1, 1)]
+    the constraint sum_h u_(k,h) T~_h(anchors[r, t-1]) = fhat_k on the fiber {(k, h)} of the candidate set, and
+    in the last step t = d the constraints of all anchors apply. Only the remaining coefficients are sampled,
+    by draws proportional to the Christoffel function of the remaining space.
+    """
+    sample_sizes = 0
+    run_times = np.zeros(3)
+    val2 = 0
+    K, dims = candidate_set(J, gamma)
+    if not np.array_equal(dims, np.arange(1, len(dims) + 1)):
+        raise ValueError("The approach 'anchor_reuse' requires the dimensions in the order 1, ..., d.")
+    t = len(dims)
+    tConstruct = time.time()
+    pool = nabopb.indepSCR1L_search(K, nabopb.INDEP_LATTICES)
+    if prev is not None:
+        pos = {tuple(k): i for i, k in enumerate(prev["K"])}
+        rows = np.array([pos[tuple(k)] for k in J[(1, 1)]])
+    run_times[0] += time.time() - tConstruct
+
+    def cubature(cons):
+        # constraints of the anchors `cons` of step t-1, draws for the remaining coefficients
+        tConstruct = time.time()
+        affine, accept, n_free = None, None, K.shape[0]
+        if prev is not None:
+            u0, N, accept = nabopb.fiber_constraints(
+                K, J[(1, 1)], anchors[cons, t - 1], np.column_stack([prev["fhat"][r][rows] for r in cons])
+            )
+            affine, n_free = (u0, N), N.shape[1]
+        m = int(np.ceil(nabopb.INDEP_OVERSAMPLING * n_free))
+        sub = nabopb.indep_SCR1L_subsample(pool, m, accept=accept) if m > 0 else None
+        run_times[0] += time.time() - tConstruct
+        return affine, sub
+
+    def projected_coefficients(affine, sub, x_tilde):
+        nonlocal sample_sizes
+        if sub is None:
+            return affine[0]
+        Xi = nabopb.indep_SCR1L_nodes(pool, sub)
+        x = Xi if x_tilde is None else np.hstack((Xi, np.outer(np.ones(Xi.shape[0]), x_tilde)))
+        tSampling = time.time()
+        f = fct_handle(x)
+        run_times[1] += time.time() - tSampling
+        tEvaluate = time.time()
+        f_hat = nabopb.indep_SCR1L_reconstruct(f, K, pool, sub, affine)
+        run_times[2] += time.time() - tEvaluate
+        sample_sizes += Xi.shape[0]
+        return f_hat
+
+    fhats = []
+    if t < d:
+        I = []
+        shared = cubature([]) if prev is None else None
+        for r in range(anchors.shape[0]):
+            affine, sub = shared if prev is None else cubature([r])
+            f_hat = projected_coefficients(affine, sub, anchors[r, t:])
+            fhats.append(f_hat)
+            # Sorting and Thresholding
+            sortIdx = np.argsort(np.abs(f_hat))[::-1]
+            sortIdx = sortIdx[np.abs(f_hat[sortIdx]) >= delta]
+            if len(sortIdx) > sparsity_s_local:
+                sortIdx = sortIdx[:sparsity_s_local]
+            # Adding detected indices to I
+            if len(I) == 0:
+                I = K[sortIdx, :]
+            else:
+                I = np.unique(np.vstack((I, K[sortIdx, :])), axis=0)
+        print(f"dim-inc of [{J[(1, 2)]}] and [{J[(2, 2)]}] done, card(I)={I.shape[0]}")
+    else:
+        affine, sub = cubature(list(range(anchors.shape[0])))
+        f_hat = projected_coefficients(affine, sub, None)
+        sortIdx = np.argsort(np.abs(f_hat))[::-1]
+        sortIdx = sortIdx[np.abs(f_hat[sortIdx]) >= delta]
+        if len(sortIdx) > sparsity_s:
+            sortIdx = sortIdx[:sparsity_s]
+        I = K[sortIdx, :]
+        val2 = f_hat[sortIdx]
+    return I, dims, val2, sample_sizes, K.shape[0], run_times, {"K": K, "fhat": fhats}
 
 
 def detect_1D(j, fct_handle, d, gamma, basis_flag, sparsity_s_local, delta, niter_r):

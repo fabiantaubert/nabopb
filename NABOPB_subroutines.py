@@ -19,6 +19,10 @@ if device == "cuda":
 else:
     prec_type = torch.double
 
+# 'Cheby_indep': number of independent lattices and draws per candidate
+INDEP_LATTICES = 8
+INDEP_OVERSAMPLING = 3.0
+
 
 def real_samples_for_sparse_recovery(f):
     """Return real-valued samples, allowing negligible imaginary roundoff."""
@@ -84,6 +88,7 @@ def random_number(d, dims, basis, number_points=1):
         "Cheby_mr1l_subsampling",
         "Cheby_sr1l",
         "Cheby_msr1l",
+        "Cheby_indep",
         "Cheby_SRLasso",
         "Cheby_SRLasso+",
         "Cheby_OMP",
@@ -166,7 +171,7 @@ def construct_cubature_1d(K, basis, j, d, s):
         W = max(1, int(np.ceil(n * np.log(n))))
         Xi = np.sort(np.sin(np.pi * (np.random.rand(W) - 0.5)))
 
-    elif basis in {"Cheby_mr1l", "Cheby_mr1l_subsampling", "Cheby_sr1l", "Cheby_msr1l"}:
+    elif basis in {"Cheby_mr1l", "Cheby_mr1l_subsampling", "Cheby_sr1l", "Cheby_msr1l", "Cheby_indep"}:
         # DCT-I of length W+1
         W = max(1, int(np.max(K)))
         Xi = np.cos(np.pi * np.linspace(0, 1, W + 1))
@@ -330,6 +335,12 @@ def construct_cubature(K, basis, dims, d, s, pde_dims=None):
         zs, Ms, deltas, reco_infos = multiSCR1L_search(K)
         W = {"zs": zs, "Ms": Ms, "deltas": deltas, "reco_infos": reco_infos}
         Xi = multi_SCR1L_nodes(W, "cheby")
+    elif basis == "Cheby_indep":
+        # 3|K| draws proportional to the Christoffel function from 8 independent random shifted lattices
+        pool = indepSCR1L_search(K, INDEP_LATTICES)
+        sub = indep_SCR1L_subsample(pool, int(np.ceil(INDEP_OVERSAMPLING * K.shape[0])))
+        W = {"pool": pool, "sub": sub}
+        Xi = indep_SCR1L_nodes(pool, sub, "cheby")
     elif basis in {"Cheby_SRLasso", "Cheby_OMP", "Cheby_COSAMP"}:
         W = s
         t = K.shape[1]
@@ -401,7 +412,7 @@ def evaluate_cubature_1d(W, Xi, f, K, basis, j, d):
             2.0 ** ((K != 0) / 2)
         )
         f_hat, _, _, _ = lstsq(phi.T, f)
-    elif basis in ["Cheby_mr1l", "Cheby_mr1l_subsampling", "Cheby_sr1l", "Cheby_msr1l"]:
+    elif basis in ["Cheby_mr1l", "Cheby_mr1l_subsampling", "Cheby_sr1l", "Cheby_msr1l", "Cheby_indep"]:
         # DCT-I
         scal = np.ones(W + 1)
         scal[0] = scal[0] / np.sqrt(2)
@@ -667,6 +678,9 @@ def evaluate_cubature(W, Xi, f, K, basis, dims, d):
     elif basis == "Cheby_msr1l":
         # Least squares on all samples of the union, one FFT per lattice
         f_hat = multi_SCR1L_reconstruct(f, K, W)
+    elif basis == "Cheby_indep":
+        # Weighted least squares on the drawn nodes, one FFT per lattice and iteration
+        f_hat = indep_SCR1L_reconstruct(f, K, W["pool"], W["sub"])
     elif basis in ["Cheby_SRLasso", "Cheby_SRLasso+"]:
         samples = torch.from_numpy(Xi).to(prec_type).to(device).requires_grad_(False)
         values = (
@@ -707,6 +721,95 @@ def evaluate_cubature(W, Xi, f, K, basis, dims, d):
         raise ValueError(f"evaluate_cubature for basis {basis} not defined")
 
     return f_hat
+
+
+def fiber_constraints(K, base, a, y):
+    """
+    Coefficients on a candidate set that satisfy the constraints from the previous dimension-incremental step.
+
+    For the candidate set K = {(k, h)} of step t, with k in the previous index set `base` and h in the fiber
+    F_k = {h : (k, h) in K} of the last coordinate, the projected coefficients y_{k,i} of step t-1 at the anchors
+    with the values a_i in coordinate t give the constraints
+
+        sum_{h in F_k} u_(k,h) T~_h(a_i) = y_{k,i},  i = 1, ..., q,
+
+    with the orthonormal Chebyshev polynomials T~_h. Per fiber, the constraints are used only in the directions of
+    the singular values at least q^{1/2}/2 of the q x |F_k| matrix C = (T~_h(a_i)), for which E C^T C = q I holds for
+    anchors distributed according to the Chebyshev measure, so that errors in y are amplified at most by 2. The
+    least squares solution in these directions and an orthonormal basis of the remaining directions give
+    u = u0 + N z. Draws proportional to the Christoffel function K' of the remaining space are obtained from draws
+    proportional to the Christoffel function K of span K with the acceptance probability `accept` = K'/K.
+
+    Parameters
+    ----------
+    K : ndarray
+        Candidate set, shape (n, t).
+    base : ndarray
+        Previous index set, shape (|base|, t-1); every row of K[:, :t-1] must be contained in it.
+    a : ndarray
+        Values a_i of coordinate t at the anchors of step t-1, shape (q,).
+    y : ndarray
+        Projected coefficients y_{k,i} of step t-1, shape (|base|, q).
+
+    Returns
+    -------
+    u0 : ndarray
+        Particular solution, shape (n,).
+    N : scipy.sparse.csr_matrix
+        Orthonormal basis of the remaining coefficients, shape (n, n').
+    accept : callable
+        Function of the Chebyshev nodes (shape (k, t)) with the values K'(x)/K(x) in [0, 1].
+    """
+    K = np.asarray(K, dtype=np.int64)
+    t = K.shape[1]
+    a = np.asarray(a, dtype=float).reshape(-1)
+    y = np.asarray(y, dtype=float).reshape(len(base), -1)
+    pos = {tuple(k): i for i, k in enumerate(np.asarray(base, dtype=np.int64))}
+    fib = np.array([pos[tuple(k)] for k in K[:, : t - 1]])
+    order = np.lexsort((K[:, t - 1], fib))
+    starts = np.flatnonzero(np.r_[True, fib[order][1:] != fib[order][:-1]])
+    groups = {}
+    for st, en in zip(starts, np.r_[starts[1:], len(order)]):
+        rows = order[st:en]
+        groups.setdefault(tuple(K[rows, t - 1]), []).append(rows)
+    u0 = np.zeros(len(K))
+    Nr, Nc, Nv, Ns = [], [], [], []
+    ncol = 0
+    for degs, members in groups.items():
+        h = np.array(degs)
+        C = np.cos(np.outer(np.arccos(a), h)) * np.where(h > 0, np.sqrt(2), 1.0)
+        U, S, Vt = np.linalg.svd(C)
+        r = int(np.sum(S >= 0.5 * np.sqrt(len(a))))
+        rows = np.array(members)
+        fk = fib[rows[:, 0]]
+        u0[rows] = (y[fk] @ U[:, :r] / S[:r]) @ Vt[:r]
+        null = Vt[r:].T
+        for i, rw in enumerate(rows):
+            Nr.append(np.repeat(rw, null.shape[1]))
+            Nc.append(np.tile(ncol + np.arange(null.shape[1]), len(h)))
+            Nv.append(null.ravel())
+            ncol += null.shape[1]
+        Ns.append((h, Vt[:r], fk))
+    N = csr_matrix(
+        (np.concatenate(Nv), (np.concatenate(Nr), np.concatenate(Nc))) if Nv else ([], ([], [])), shape=(len(K), ncol)
+    )
+    base = np.asarray(base, dtype=np.int64)
+
+    def accept(X):
+        th = np.arccos(np.clip(X, -1, 1))
+        Kf, Kr = 0.0, 0.0
+        for h, V, fk in Ns:
+            B = base[np.unique(fk)]
+            P = np.ones((len(X), len(B)))
+            for j in range(t - 1):
+                P *= (np.cos(np.outer(th[:, j], B[:, j])) * np.where(B[:, j] > 0, np.sqrt(2), 1.0)) ** 2
+            T = np.cos(np.outer(th[:, t - 1], h)) * np.where(h > 0, np.sqrt(2), 1.0)
+            full = np.sum(T**2, axis=1)
+            Kf = Kf + P.sum(axis=1) * full
+            Kr = Kr + P.sum(axis=1) * (full - np.sum((T @ V.T) ** 2, axis=1))
+        return np.clip(Kr / Kf, 0.0, 1.0)
+
+    return u0, N, accept
 
 
 def Ax_ssr1l(x, K, W, S):
