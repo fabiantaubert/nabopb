@@ -7,7 +7,9 @@ from scr1lfft.SCR1L_weights import SCR1L_weights
 
 def SCR1L_reconstruct(f, I, lattice, tol=1e-10, wflag="weighted", maxiter=None, return_info=False):
     """
-    Least squares approximation from the samples on a shifted cosine rank-1 lattice (Algorithm 5.3).
+    Least squares approximation from the samples on a shifted cosine rank-1 lattice (Algorithm 6.1 of D. Potts and
+    T. Ullrich, Cosine approximation on shifted rank-1 lattices: sampling and arithmetic complexity without the
+    factor 2^d).
 
     The samples are transformed once by an FFT of length M. The weighted least squares problem
         min_y || W (B(t) V y - ghat) ||_2,  ghat = fft(f) / M,

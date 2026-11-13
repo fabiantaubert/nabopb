@@ -6,7 +6,8 @@ from scr1lfft.build_aliasing_structure import build_aliasing_structure
 
 def multiSCR1L_search(index_set_I, c=1.0, eta=None, rng=None, pmin=11, max_lattices=200):
     """
-    Union of shifted nested cosine rank-1 lattices with peeling (Algorithm 5.4).
+    Union of shifted nested cosine rank-1 lattices with peeling (Algorithm 5.4 of D. Potts, Cosine approximation on
+    shifted nested rank-1 lattices without the factor 2^d).
 
     An index h is resolved by lattice r if its residue (eta o h) . z_r mod M_r contains no other
     unresolved index of I; resolved indices are removed from all lattices, and this is repeated as long as
@@ -14,7 +15,7 @@ def multiSCR1L_search(index_set_I, c=1.0, eta=None, rng=None, pmin=11, max_latti
     unresolved set U with the fine chain for the targets max{c |P_{<=m} U|, max_U h_m - min_U h_m + 1}
     (the first target at least `pmin`). If the last three lattices resolved no index, the next lattice
     is a general rank-1 lattice with prime size M >= max{4 |U|, N_inf + 1} and uniform z. The lattices
-    peel I, so the sampling matrix of the union has full rank for almost all shifts (Theorem 3.18); the
+    peel I, so the sampling matrix of the union has full rank for almost all shifts (Theorem 3.20 there); the
     shifts are drawn independently and uniformly. The construction works for every finite index set.
 
     Parameters

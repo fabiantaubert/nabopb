@@ -11,13 +11,14 @@ from scr1lfft.SCR1L_reconstruct import _FreqLS
 def SCR1L_search(index_set_I, c=1.25, K=6, m0=1, rng=None, dense_max=1500, extra=4, maxgrow=30):
     """
     Component-by-component construction of a shifted nested cosine rank-1 lattice with coset capacity
-    (Algorithms 5.1 and 5.2).
+    (Algorithm 6.5 of D. Potts and T. Ullrich, Cosine approximation on shifted rank-1 lattices: sampling and
+    arithmetic complexity without the factor 2^d).
 
     The divisor chain 1 = p_0 | p_1 | ... | p_d = M of `divisor_chain` defines the nested generating
     vector z_j = (M / p_j) w_j with units w_j in Z_{p_j}^*. In step j, random units w_j are admissible if
     no coset of a lattice subgroup of a stage m0 <= m < j is overloaded in the prefix problem with the
     index set P_{<=j} I. For up to K admissible units a shift Delta_j is drawn, and the pair with the
-    smallest condition number of the weighted prefix problem (weights of Algorithm 5.3) is kept. If no
+    smallest condition number of the weighted prefix problem (weights of Algorithm 6.1) is kept. If no
     admissible unit is found, the ratio p_j / p_{j-1} is enlarged.
 
     The construction is designed for lower sets I, for which the prefix problems are the problems of
@@ -109,7 +110,7 @@ def _max_load_ratio(J, zp, pj, p, j, m0):
 
 
 def _condition(J, lattice, dense_max):
-    # condition number of the prefix problem with the weights of Algorithm 5.3
+    # condition number of the prefix problem with the weights of Algorithm 6.1
     weights = SCR1L_weights(J, lattice, "weighted")
     X = _FreqLS([(lattice["reco_infos"], lattice["M"], weights["w"], 1.0)], weights["v"])
     if X.shape[0] < X.shape[1]:

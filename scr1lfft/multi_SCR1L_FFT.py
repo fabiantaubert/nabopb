@@ -105,7 +105,7 @@ def multi_SCR1L_reconstruct(f, I, multi_lattice, tol=1e-10, wflag="unweighted", 
     wflag : {'unweighted', 'weighted'}, optional
         - `'unweighted'` (default): ordinary least squares on all samples in the orthonormal basis.
         - `'weighted'`: row weights H_r(l)^{-1/2} of every lattice and the column weights
-          (sum_r M_r omega_{r,h})^{-1/2}, cf. Algorithm 5.3.
+          (sum_r M_r omega_{r,h})^{-1/2}, cf. Algorithm 6.1 of Potts and Ullrich.
     maxiter : int, optional
         Maximal number of LSQR iterations.
     return_info : bool, optional

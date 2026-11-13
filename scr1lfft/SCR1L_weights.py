@@ -5,7 +5,7 @@ from scr1lfft.SCR1L_FFT import hit_numbers, orbit_sum, _get_reco_infos
 def SCR1L_weights(I, lattice, wflag="weighted"):
     """
     Row and column weights of the weighted least squares problem on a shifted cosine rank-1 lattice
-    (Algorithm 5.3, step 2).
+    (Algorithm 6.1, step 2, of D. Potts and T. Ullrich, Cosine approximation on shifted rank-1 lattices).
 
     The least squares problem is solved in the frequency domain,
         min_y || W (B(t) V y - ghat) ||_2,  c = V y,  ghat = fft(g) / M,

@@ -13,9 +13,10 @@ def indepSCR1L_search(I, L=8, rng=None):
     in {0, ..., M-1}^d and [0,1)^d. For every finite index set, L >= 13.1 ln(|I|/eta) such lattices with the row
     weights H_r(l)^{-1/2} have a condition number smaller than 2 with probability at least 1 - eta, and draws
     proportional to the Christoffel function K = sum_h psi_h^2 from their nodes reduce the number of samples to
-    O(H |I| log |I|) (Theorem 4.14 and Corollary 4.15 of D. Potts, Cosine approximation on shifted nested rank-1
-    lattices without the factor 2^d). K is evaluated on every lattice by one application of `SCR1L_FFT` to the
-    expansion sum_h psi_h^2 = sum_g a_g psi_g with g = 2 h_T, T a subset of the support of h.
+    O(H |I| log |I|) (Theorem 5.11, Corollary 5.12 and Algorithm 6.4 of D. Potts and T. Ullrich, Cosine
+    approximation on shifted rank-1 lattices: sampling and arithmetic complexity without the factor 2^d). K is
+    evaluated on every lattice by one application of `SCR1L_FFT` to the expansion sum_h psi_h^2 = sum_g a_g psi_g
+    with g = 2 h_T, T a subset of the support of h.
 
     Parameters
     ----------

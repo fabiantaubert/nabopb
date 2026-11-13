@@ -5,7 +5,8 @@ from sympy import nextprime
 
 def divisor_chain(I, c=1.25, p1min=0, maxit=500):
     """
-    Divisor chain with live capacity (Algorithm 5.1).
+    Divisor chain with live capacity (step 1 of Algorithm 6.5 of D. Potts and T. Ullrich, Cosine approximation on
+    shifted rank-1 lattices: sampling and arithmetic complexity without the factor 2^d).
 
     Computes 1 = p_0 | p_1 | ... | p_d = M with prime ratios q_m = p_m / p_{m-1} such that
     p_m >= c n_m with n_m = |P_{<=m} I| (the fine chain), and enlarges the chain until the necessary
