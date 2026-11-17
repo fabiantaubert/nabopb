@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.fft import fft, ifft
+from scipy.fft import rfft, irfft
 from scr1lfft.build_aliasing_structure import build_aliasing_structure
 
 
@@ -10,7 +10,9 @@ def SCR1L_FFT(phat, I, lattice, tflag="notransp"):
     The nodes are x_k = (k z / M + delta) mod 1, k = 0, ..., M-1, in [0,1)^d, i.e., the Chebyshev nodes
     cos(2 pi x_k) in [-1,1]^d, see `SCR1L_nodes`. The polynomials are given in the orthonormal Chebyshev
     basis psi_h(x) = 2^{s(h)/2} prod_j cos(2 pi h_j x_j), as in `cmr1lfft`. One application costs the
-    nonzeros of the aliasing stages (`reco_infos['ops']`) and one FFT of length M.
+    nonzeros of the aliasing stages (`reco_infos['ops']`) and one FFT of length M for real data: B(t) c is
+    conjugate symmetric for real c, so A c = F_M B(t) c is the inverse FFT with real output (`irfft`) of the
+    residues l = 0, ..., floor(M/2), and A^T y = B(t)^T F_M^T y uses the FFT for real input (`rfft`).
 
     Parameters
     ----------
@@ -49,13 +51,21 @@ def SCR1L_FFT(phat, I, lattice, tflag="notransp"):
     M = int(lattice["M"])
     scal = 2.0 ** (reco_infos["nnz_s"] / 2)
     vec = np.ndim(phat) == 1
-    X = np.asarray(phat).reshape(len(phat), -1)
+    # A is real; only the real part of complex input is used
+    X = np.real(np.asarray(phat)).reshape(len(phat), -1)
 
     if tflag == "notransp":
+        # B(t) X is conjugate symmetric, irfft uses its rows l = 0, ..., floor(M/2)
         G = residues(reco_infos, M, scal[:, None] * X)
-        p = M * np.real(ifft(G, axis=0))
+        p = M * irfft(G[: M // 2 + 1], n=M, axis=0)
     elif tflag == "transp":
-        p = scal[:, None] * np.real(residues_T(reco_infos, M * ifft(X, axis=0)))
+        # F_M^T X = conj(fft(X)) has the rows conj(R_l) for l <= M/2 and R_{M-l} for l > M/2, R = rfft(X)
+        R = rfft(X, axis=0)
+        h = M // 2 + 1
+        U = np.empty((M, X.shape[1]), dtype=R.dtype)
+        np.conjugate(R, out=U[:h])
+        U[h:] = R[M - h : 0 : -1]
+        p = scal[:, None] * np.real(residues_T(reco_infos, U))
     elif tflag == "notransp-transp":
         G = residues(reco_infos, M, scal[:, None] * X)
         p = M * scal[:, None] * np.real(residues_T(reco_infos, np.conj(G)))

@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.fft import fft
+from scipy.fft import rfft
 from scipy.sparse.linalg import LinearOperator, lsqr
 from scr1lfft.SCR1L_FFT import residues, residues_T, _get_reco_infos
 from scr1lfft.SCR1L_weights import SCR1L_weights
@@ -11,7 +11,8 @@ def SCR1L_reconstruct(f, I, lattice, tol=1e-10, wflag="weighted", maxiter=None, 
     T. Ullrich, Cosine approximation on shifted rank-1 lattices: sampling and arithmetic complexity without the
     factor 2^d).
 
-    The samples are transformed once by an FFT of length M. The weighted least squares problem
+    The samples are transformed once by the FFT for real input of length M (`rfft`). The weighted least squares
+    problem
         min_y || W (B(t) V y - ghat) ||_2,  ghat = fft(f) / M,
     is solved by LSQR on the residues l = 0, ..., floor(M/2) (factor sqrt(2) for 0 < l < M/2, real and
     imaginary parts stacked), so that every iteration applies only B(t) and B(t)^T, without FFT.
@@ -44,7 +45,8 @@ def SCR1L_reconstruct(f, I, lattice, tol=1e-10, wflag="weighted", maxiter=None, 
     M = int(lattice["M"])
     weights = SCR1L_weights(I, lattice, wflag)
     X = _FreqLS([(reco_infos, M, weights["w"], 1.0)], weights["v"])
-    ghat = fft(np.asarray(f).reshape(-1)) / M
+    # ghat_l for the residues l = 0, ..., floor(M/2) used by _FreqLS
+    ghat = rfft(np.real(np.asarray(f)).reshape(-1)) / M
     out = lsqr(X.linop(), X.rhs([ghat]), atol=tol, btol=tol, iter_lim=maxiter)
     f_hat = weights["v"] * out[0] / 2.0 ** (reco_infos["nnz_s"] / 2)
     if return_info:

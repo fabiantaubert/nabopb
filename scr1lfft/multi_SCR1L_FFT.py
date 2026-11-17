@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.fft import fft
+from scipy.fft import rfft
 from scipy.sparse.linalg import lsqr
 from scr1lfft.build_aliasing_structure import build_aliasing_structure
 from scr1lfft.SCR1L_FFT import SCR1L_FFT, SCR1L_nodes
@@ -88,9 +88,9 @@ def multi_SCR1L_reconstruct(f, I, multi_lattice, tol=1e-10, wflag="unweighted", 
     """
     Least squares approximation from the samples on a union of shifted cosine rank-1 lattices.
 
-    The samples of lattice r are transformed once by an FFT of length M_r, and LSQR is applied to the
-    stacked problems sqrt(M_r) W_r (B_r(t_r) V y - ghat_r) on the residues l = 0, ..., floor(M_r/2), so
-    that every iteration applies only the aliasing matrices, without FFT.
+    The samples of lattice r are transformed once by the FFT for real input of length M_r (`rfft`), and LSQR
+    is applied to the stacked problems sqrt(M_r) W_r (B_r(t_r) V y - ghat_r) on the residues
+    l = 0, ..., floor(M_r/2), so that every iteration applies only the aliasing matrices, without FFT.
 
     Parameters
     ----------
@@ -119,7 +119,7 @@ def multi_SCR1L_reconstruct(f, I, multi_lattice, tol=1e-10, wflag="unweighted", 
         `iterations` (int).
     """
     lattices = _lattices(I, multi_lattice)
-    f = np.asarray(f).reshape(-1)
+    f = np.real(np.asarray(f)).reshape(-1)
     s = lattices[0]["reco_infos"]["nnz_s"]
     parts, ghats = [], []
     if wflag == "unweighted":
@@ -135,7 +135,7 @@ def multi_SCR1L_reconstruct(f, I, multi_lattice, tol=1e-10, wflag="unweighted", 
         if wflag == "weighted":
             omega = omega + M / weights["v"] ** 2
         parts.append((lat["reco_infos"], M, weights["w"], np.sqrt(M)))
-        ghats.append(fft(f[start : start + M]) / M)
+        ghats.append(rfft(f[start : start + M]) / M)
         start += M
     if wflag == "weighted":
         v = 1 / np.sqrt(omega)
